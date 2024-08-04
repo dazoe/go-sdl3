@@ -1,0 +1,1 @@
+SDL_HitTestResult cgoHitTestCallback(SDL_Window *win, SDL_Point *area, void *data);
