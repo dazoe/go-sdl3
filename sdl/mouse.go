@@ -39,7 +39,7 @@ const (
 	SYSTEM_CURSOR_S_RESIZE    = SystemCursor(C.SDL_SYSTEM_CURSOR_S_RESIZE)    /**< Window resize bottom. May be NS_RESIZE. */
 	SYSTEM_CURSOR_SW_RESIZE   = SystemCursor(C.SDL_SYSTEM_CURSOR_SW_RESIZE)   /**< Window resize bottom-left. May be NESW_RESIZE. */
 	SYSTEM_CURSOR_W_RESIZE    = SystemCursor(C.SDL_SYSTEM_CURSOR_W_RESIZE)    /**< Window resize left. May be EW_RESIZE. */
-	NUM_SYSTEM_CURSORS        = SystemCursor(C.SDL_NUM_SYSTEM_CURSORS)
+	SYSTEM_CURSOR_COUNT       = SystemCursor(C.SDL_SYSTEM_CURSOR_COUNT)
 )
 
 // Scroll direction types for the Scroll event
@@ -74,7 +74,7 @@ const (
 // Return whether a mouse is currently connected.
 // (https://wiki.libsdl.org/SDL3/SDL_HasMouse)
 func HasMouse() bool {
-	return C.SDL_HasMouse() != 0
+	return bool(C.SDL_HasMouse())
 }
 
 // Get a list of currently connected mice.
@@ -135,37 +135,39 @@ func (window *Window) WarpMouseInWindow(x, y float32) {
 // (https://wiki.libsdl.org/SDL3/SDL_WarpMouseGlobal)
 func WarpMouseGlobal(x, y float32) (err error) {
 	ret := C.SDL_WarpMouseGlobal(C.float(x), C.float(y))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
 }
 
-// Set relative mouse mode.
-// (https://wiki.libsdl.org/SDL3/SDL_SetRelativeMouseMode)
-func SetRelativeMouseMode(enabled bool) (err error) {
-	ret := C.SDL_SetRelativeMouseMode(sdlBool(enabled))
-	if ret != 0 {
-		err = GetError()
-	}
-	return
-}
+// TODO: * SDL_SetRelativeMouseMode() - replaced with SDL_SetWindowRelativeMouseMode()
+// // Set relative mouse mode.
+// // (https://wiki.libsdl.org/SDL3/SDL_SetRelativeMouseMode)
+// func SetRelativeMouseMode(enabled bool) (err error) {
+// 	ret := C.SDL_SetRelativeMouseMode((C.bool)(enabled))
+// 	if ret != 0 {
+// 		err = GetError()
+// 	}
+// 	return
+// }
 
 // Capture the mouse and to track input outside an SDL window.
 // (https://wiki.libsdl.org/SDL3/SDL_CaptureMouse)
 func CaptureMouse(enabled bool) (err error) {
-	ret := C.SDL_CaptureMouse(sdlBool(enabled))
-	if ret != 0 {
+	ret := C.SDL_CaptureMouse((C.bool)(enabled))
+	if !ret {
 		err = GetError()
 	}
 	return
 }
 
-// Query whether relative mouse mode is enabled.
-// (https://wiki.libsdl.org/SDL3/SDL_GetRelativeMouseMode)
-func GetRelativeMouseMode() bool {
-	return C.SDL_GetRelativeMouseMode() != 0
-}
+// TODO: * SDL_GetRelativeMouseMode() - replaced with SDL_GetWindowRelativeMouseMode()
+// // Query whether relative mouse mode is enabled.
+// // (https://wiki.libsdl.org/SDL3/SDL_GetRelativeMouseMode)
+// func GetRelativeMouseMode() bool {
+// 	return C.SDL_GetRelativeMouseMode() != 0
+// }
 
 // Create a cursor using the specified bitmap data and mask (in MSB format).
 // (https://wiki.libsdl.org/SDL3/SDL_CreateCursor)
@@ -202,7 +204,7 @@ func CreateSystemCursor(id SystemCursor) (cursor *Cursor, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetCursor)
 func SetCursor(cursor *Cursor) (err error) {
 	ret := C.SDL_SetCursor(cursor.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -234,7 +236,7 @@ func DestroyCursor(cursor *Cursor) {
 // (https://wiki.libsdl.org/SDL3/SDL_ShowCursor)
 func ShowCursor() (err error) {
 	ret := C.SDL_ShowCursor()
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -244,7 +246,7 @@ func ShowCursor() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_HideCursor)
 func HideCursor() (err error) {
 	ret := C.SDL_HideCursor()
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -253,5 +255,5 @@ func HideCursor() (err error) {
 // Return whether the cursor is currently being shown.
 // (https://wiki.libsdl.org/SDL3/SDL_CursorVisible)
 func CursorVisible() bool {
-	return C.SDL_CursorVisible() != 0
+	return bool(C.SDL_CursorVisible())
 }

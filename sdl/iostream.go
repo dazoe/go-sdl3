@@ -13,6 +13,8 @@ import (
 	"unsafe"
 )
 
+// TODO: not updated for 3.1.6
+
 // SDL_IOStream status, set by a read or write operation.
 // (https://wiki.libsdl.org/SDL3/SDL_IOStatus)
 type IOStatus C.SDL_IOStatus
@@ -122,7 +124,7 @@ const (
 // (https://wiki.libsdl.org/SDL3/SDL_CloseIO)
 func (stream *IOStream) Close() (err error) {
 	ret := C.SDL_CloseIO(stream.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -132,7 +134,7 @@ func (stream *IOStream) Close() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetIOProperties)
 func (stream *IOStream) GetProperties() (id PropertiesID, err error) {
 	id = PropertiesID(C.SDL_GetIOProperties(stream.cptr()))
-	if id != 0 {
+	if id == 0 {
 		err = GetError()
 	}
 	return

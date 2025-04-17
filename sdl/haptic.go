@@ -336,7 +336,7 @@ func (instance_id HapticID) GetHapticName() string {
 
 // Open a haptic device for use.
 // (https://wiki.libsdl.org/SDL3/SDL_OpenHaptic)
-func OpenHaptic(instance_id HapticID) (*Haptic, error) {
+func (instance_id HapticID) OpenHaptic() (*Haptic, error) {
 	ret := C.SDL_OpenHaptic(instance_id.c())
 	if ret == nil {
 		return nil, GetError()
@@ -377,7 +377,7 @@ func (haptic *Haptic) GetName() (name string, err error) {
 // Query whether or not the current mouse has haptic capabilities.
 // (https://wiki.libsdl.org/SDL3/SDL_IsMouseHaptic)
 func IsMouseHaptic() bool {
-	return C.SDL_IsMouseHaptic() == C.SDL_TRUE
+	return bool(C.SDL_IsMouseHaptic())
 }
 
 // Try to open a haptic device from the current mouse.
@@ -393,7 +393,7 @@ func OpenHapticFromMouse() (*Haptic, error) {
 // Query if a joystick has haptic features.
 // (https://wiki.libsdl.org/SDL3/SDL_IsJoystickHaptic)
 func (joystick *Joystick) IsHaptic() bool {
-	return C.SDL_IsJoystickHaptic(joystick.cptr()) == C.SDL_TRUE
+	return C.SDL_IsJoystickHaptic(joystick.cptr()) == true
 }
 
 // Open a haptic device for use from a joystick device.
@@ -457,7 +457,7 @@ func (haptic *Haptic) GetNumAxes() (int32, error) {
 // (https://wiki.libsdl.org/SDL3/SDL_HapticEffectSupported)
 func (haptic *Haptic) EffectSupported(effect HapticEffect) bool {
 	// TODO: needs tested, not sure if HapticEffect.cptr() works correctly for all types
-	return C.SDL_HapticEffectSupported(haptic.cptr(), effect.cptr()) == C.SDL_TRUE
+	return C.SDL_HapticEffectSupported(haptic.cptr(), effect.cptr()) == true
 }
 
 type HapticEffectID C.int
@@ -480,7 +480,7 @@ func (haptic *Haptic) CreateEffect(effect HapticEffect) (id HapticEffectID, err 
 // (https://wiki.libsdl.org/SDL3/SDL_UpdateHapticEffect)
 func (haptic *Haptic) UpdateEffect(id HapticEffectID, effect HapticEffect) error {
 	ret := C.SDL_UpdateHapticEffect(haptic.cptr(), id.c(), effect.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -490,7 +490,7 @@ func (haptic *Haptic) UpdateEffect(id HapticEffectID, effect HapticEffect) error
 // (https://wiki.libsdl.org/SDL3/SDL_RunHapticEffect)
 func (haptic *Haptic) RunEffect(id HapticEffectID, iterations uint32) error {
 	ret := C.SDL_RunHapticEffect(haptic.cptr(), id.c(), C.Uint32(iterations))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -500,7 +500,7 @@ func (haptic *Haptic) RunEffect(id HapticEffectID, iterations uint32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_StopHapticEffect)
 func (haptic *Haptic) StopEffect(id HapticEffectID) error {
 	ret := C.SDL_StopHapticEffect(haptic.cptr(), id.c())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -515,18 +515,18 @@ func (haptic *Haptic) DestroyEffect(id HapticEffectID) {
 // Get the status of the current effect on the specified haptic device.
 // (https://wiki.libsdl.org/SDL3/SDL_GetHapticEffectStatus)
 func (haptic *Haptic) GetEffectStatus(id HapticEffectID) (playing bool, err error) {
-	ret := int(C.SDL_GetHapticEffectStatus(haptic.cptr(), id.c()))
-	if ret < 0 {
+	ret := C.SDL_GetHapticEffectStatus(haptic.cptr(), id.c())
+	if !ret {
 		return false, GetError()
 	}
-	return ret == 1, nil
+	return bool(ret), nil
 }
 
 // Set the global gain of the specified haptic device.
 // (https://wiki.libsdl.org/SDL3/SDL_SetHapticGain)
 func (haptic *Haptic) SetGain(gain int32) error {
 	ret := C.SDL_SetHapticGain(haptic.cptr(), C.int(gain))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -536,7 +536,7 @@ func (haptic *Haptic) SetGain(gain int32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_SetHapticAutocenter)
 func (haptic *Haptic) SetAutocenter(autocenter int32) error {
 	ret := C.SDL_SetHapticAutocenter(haptic.cptr(), C.int(autocenter))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -546,7 +546,7 @@ func (haptic *Haptic) SetAutocenter(autocenter int32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_PauseHaptic)
 func (haptic *Haptic) Pause() error {
 	ret := C.SDL_PauseHaptic(haptic.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -556,7 +556,7 @@ func (haptic *Haptic) Pause() error {
 // (https://wiki.libsdl.org/SDL3/SDL_ResumeHaptic)
 func (haptic *Haptic) Resume() error {
 	ret := C.SDL_ResumeHaptic(haptic.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -566,7 +566,7 @@ func (haptic *Haptic) Resume() error {
 // (https://wiki.libsdl.org/SDL3/SDL_StopHapticEffects)
 func (haptic *Haptic) StopEffects() error {
 	ret := C.SDL_StopHapticEffects(haptic.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -575,14 +575,14 @@ func (haptic *Haptic) StopEffects() error {
 // Check whether rumble is supported on a haptic device.
 // (https://wiki.libsdl.org/SDL3/SDL_HapticRumbleSupported)
 func (haptic *Haptic) RumbleSupported() bool {
-	return C.SDL_HapticRumbleSupported(haptic.cptr()) == C.SDL_TRUE
+	return bool(C.SDL_HapticRumbleSupported(haptic.cptr()))
 }
 
 // Initialize a haptic device for simple rumble playback.
 // (https://wiki.libsdl.org/SDL3/SDL_InitHapticRumble)
 func (haptic *Haptic) InitRumble() error {
 	ret := C.SDL_InitHapticRumble(haptic.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -592,7 +592,7 @@ func (haptic *Haptic) InitRumble() error {
 // (https://wiki.libsdl.org/SDL3/SDL_PlayHapticRumble)
 func (haptic *Haptic) PlayRumble(strength float32, length uint32) error {
 	ret := C.SDL_PlayHapticRumble(haptic.cptr(), C.float(strength), C.Uint32(length))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -602,7 +602,7 @@ func (haptic *Haptic) PlayRumble(strength float32, length uint32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_StopHapticRumble)
 func (haptic *Haptic) StopRumble() error {
 	ret := C.SDL_StopHapticRumble(haptic.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil

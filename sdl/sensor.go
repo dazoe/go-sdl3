@@ -140,7 +140,7 @@ func (sensor *Sensor) GetData(data []float32) (err error) {
 	dataPtr := (*C.float)(unsafe.SliceData(data))
 	num_values := C.int(len(data))
 	ret := C.SDL_GetSensorData(sensor.cptr(), dataPtr, num_values)
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return

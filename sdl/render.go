@@ -72,6 +72,14 @@ func (t *Texture) cptr() *C.SDL_Texture {
 	return (*C.SDL_Texture)(t)
 }
 
+func (t *Texture) W() int32 {
+	return int32(t.w)
+}
+
+func (t *Texture) H() int32 {
+	return int32(t.h)
+}
+
 /* Function prototypes */
 
 // Get the number of 2D rendering drivers available for the current display.
@@ -98,7 +106,7 @@ func CreateWindowAndRenderer(title string, width, height int32, flags WindowFlag
 	var cWindow *C.SDL_Window
 	var cRenderer *C.SDL_Renderer
 	ret := C.SDL_CreateWindowAndRenderer(cTitle, C.int(width), C.int(height), flags.c(), &cWindow, &cRenderer)
-	if ret < 0 {
+	if !ret {
 		return nil, nil, GetError()
 	}
 	return (*Window)(unsafe.Pointer(cWindow)), (*Renderer)(unsafe.Pointer(cRenderer)), nil
@@ -223,7 +231,7 @@ const (
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderOutputSize)
 func (renderer *Renderer) GetOutputSize() (w, h int32, err error) {
 	ret := C.SDL_GetRenderOutputSize(renderer.cptr(), (*C.int)(&w), (*C.int)(&h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -233,7 +241,7 @@ func (renderer *Renderer) GetOutputSize() (w, h int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetCurrentRenderOutputSize)
 func (renderer *Renderer) GetCurrentOutputSize() (w, h int32, err error) {
 	ret := C.SDL_GetCurrentRenderOutputSize(renderer.cptr(), (*C.int)(&w), (*C.int)(&h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -348,7 +356,7 @@ func (texture *Texture) GetRenderer() (*Renderer, error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextureSize)
 func (texture *Texture) GetSize() (w, h float32, err error) {
 	ret := C.SDL_GetTextureSize(texture.cptr(), (*C.float)(&w), (*C.float)(&h))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -358,7 +366,7 @@ func (texture *Texture) GetSize() (w, h float32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetTextureColorMod)
 func (texture *Texture) SetColorMod(r, g, b uint8) error {
 	ret := C.SDL_SetTextureColorMod(texture.cptr(), C.Uint8(r), C.Uint8(g), C.Uint8(b))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -368,7 +376,7 @@ func (texture *Texture) SetColorMod(r, g, b uint8) error {
 // (https://wiki.libsdl.org/SDL3/SDL_SetTextureColorModFloat)
 func (texture *Texture) SetColorModFloat(r, g, b float32) error {
 	ret := C.SDL_SetTextureColorModFloat(texture.cptr(), C.float(r), C.float(g), C.float(b))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -378,7 +386,7 @@ func (texture *Texture) SetColorModFloat(r, g, b float32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextureColorMod)
 func (texture *Texture) GetColorMod() (r, g, b uint8, err error) {
 	ret := C.SDL_GetTextureColorMod(texture.cptr(), (*C.Uint8)(&r), (*C.Uint8)(&g), (*C.Uint8)(&b))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -388,7 +396,7 @@ func (texture *Texture) GetColorMod() (r, g, b uint8, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextureColorModFloat)
 func (texture *Texture) GetColorModFloat() (r, g, b float32, err error) {
 	ret := C.SDL_GetTextureColorModFloat(texture.cptr(), (*C.float)(&r), (*C.float)(&g), (*C.float)(&b))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -398,7 +406,7 @@ func (texture *Texture) GetColorModFloat() (r, g, b float32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetTextureAlphaMod)
 func (texture *Texture) SetAlphaMod(alpha uint8) error {
 	ret := C.SDL_SetTextureAlphaMod(texture.cptr(), C.Uint8(alpha))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -408,7 +416,7 @@ func (texture *Texture) SetAlphaMod(alpha uint8) error {
 // (https://wiki.libsdl.org/SDL3/SDL_SetTextureAlphaModFloat)
 func (texture *Texture) SetAlphaModFloat(alpha float32) error {
 	ret := C.SDL_SetTextureAlphaModFloat(texture.cptr(), C.float(alpha))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -418,7 +426,7 @@ func (texture *Texture) SetAlphaModFloat(alpha float32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextureAlphaMod)
 func (texture *Texture) GetAlphaMod() (alpha uint8, err error) {
 	ret := C.SDL_GetTextureAlphaMod(texture.cptr(), (*C.Uint8)(&alpha))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -428,7 +436,7 @@ func (texture *Texture) GetAlphaMod() (alpha uint8, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextureAlphaModFloat)
 func (texture *Texture) GetAlphaModFloat() (alpha float32, err error) {
 	ret := C.SDL_GetTextureAlphaModFloat(texture.cptr(), (*C.float)(&alpha))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -438,7 +446,7 @@ func (texture *Texture) GetAlphaModFloat() (alpha float32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetTextureBlendMode)
 func (texture *Texture) SetBlendMode(blendMode BlendMode) error {
 	ret := C.SDL_SetTextureBlendMode(texture.cptr(), blendMode.c())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -448,7 +456,7 @@ func (texture *Texture) SetBlendMode(blendMode BlendMode) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextureBlendMode)
 func (texture *Texture) GetBlendMode() (blendMode BlendMode, err error) {
 	ret := C.SDL_GetTextureBlendMode(texture.cptr(), blendMode.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -458,7 +466,7 @@ func (texture *Texture) GetBlendMode() (blendMode BlendMode, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetTextureScaleMode)
 func (texture *Texture) SetScaleMode(scaleMode ScaleMode) error {
 	ret := C.SDL_SetTextureScaleMode(texture.cptr(), scaleMode.c())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -468,7 +476,7 @@ func (texture *Texture) SetScaleMode(scaleMode ScaleMode) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextureScaleMode)
 func (texture *Texture) GetScaleMode() (scaleMode ScaleMode, err error) {
 	ret := C.SDL_GetTextureScaleMode(texture.cptr(), scaleMode.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -478,7 +486,7 @@ func (texture *Texture) GetScaleMode() (scaleMode ScaleMode, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_UpdateTexture)
 func (texture *Texture) Update(rect *Rect, pixels unsafe.Pointer, pitch int32) error {
 	ret := C.SDL_UpdateTexture(texture.cptr(), rect.cptr(), pixels, C.int(pitch))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -492,7 +500,7 @@ func (texture *Texture) UpdateYUV(rect *Rect, Yplane []uint8, Ypitch int32, Upla
 		(*C.Uint8)(unsafe.SliceData(Yplane)), C.int(Ypitch),
 		(*C.Uint8)(unsafe.SliceData(Uplane)), C.int(Upitch),
 		(*C.Uint8)(unsafe.SliceData(Vplane)), C.int(Vpitch))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -504,7 +512,7 @@ func (texture *Texture) UpdateNV(rect *Rect, Yplane []uint8, Ypitch int32, UVpla
 	ret := C.SDL_UpdateNVTexture(texture.cptr(), rect.cptr(),
 		(*C.Uint8)(unsafe.SliceData(Yplane)), C.int(Ypitch),
 		(*C.Uint8)(unsafe.SliceData(UVplane)), C.int(UVpitch))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -537,7 +545,7 @@ func (texture *Texture) UpdateNV(rect *Rect, Yplane []uint8, Ypitch int32, UVpla
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderTarget)
 func (renderer *Renderer) SetTarget(texture *Texture) error {
 	ret := C.SDL_SetRenderTarget(renderer.cptr(), texture.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -555,9 +563,9 @@ func (renderer *Renderer) GetTarget() (texture *Texture, err error) {
 
 // Set a device independent resolution and presentation mode for rendering.
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderLogicalPresentation)
-func (renderer *Renderer) SetLogicalPresentation(w, h int32, mode RendererLogicalPresentation, scaleMode ScaleMode) error {
-	ret := C.SDL_SetRenderLogicalPresentation(renderer.cptr(), C.int(w), C.int(h), mode.c(), scaleMode.c())
-	if ret < 0 {
+func (renderer *Renderer) SetLogicalPresentation(w, h int32, mode RendererLogicalPresentation) error {
+	ret := C.SDL_SetRenderLogicalPresentation(renderer.cptr(), C.int(w), C.int(h), mode.c())
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -565,9 +573,9 @@ func (renderer *Renderer) SetLogicalPresentation(w, h int32, mode RendererLogica
 
 // Get device independent resolution and presentation mode for rendering.
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderLogicalPresentation)
-func (renderer *Renderer) GetLogicalPresentation() (w, h int32, mode RendererLogicalPresentation, scaleMode ScaleMode, err error) {
-	ret := C.SDL_GetRenderLogicalPresentation(renderer.cptr(), (*C.int)(&w), (*C.int)(&h), mode.cptr(), scaleMode.cptr())
-	if ret < 0 {
+func (renderer *Renderer) GetLogicalPresentation() (w, h int32, mode RendererLogicalPresentation, err error) {
+	ret := C.SDL_GetRenderLogicalPresentation(renderer.cptr(), (*C.int)(&w), (*C.int)(&h), mode.cptr())
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -577,7 +585,7 @@ func (renderer *Renderer) GetLogicalPresentation() (w, h int32, mode RendererLog
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderLogicalPresentationRect)
 func (renderer *Renderer) GetLogicalPresentationRect() (rect FRect, err error) {
 	ret := C.SDL_GetRenderLogicalPresentationRect(renderer.cptr(), rect.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -587,7 +595,7 @@ func (renderer *Renderer) GetLogicalPresentationRect() (rect FRect, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderCoordinatesFromWindow)
 func (renderer *Renderer) CoordinatesFromWindow(windowX, windowY float32) (x, y float32, err error) {
 	ret := C.SDL_RenderCoordinatesFromWindow(renderer.cptr(), C.float(windowX), C.float(windowY), (*C.float)(&x), (*C.float)(&y))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -597,7 +605,7 @@ func (renderer *Renderer) CoordinatesFromWindow(windowX, windowY float32) (x, y 
 // (https://wiki.libsdl.org/SDL3/SDL_RenderCoordinatesToWindow)
 func (renderer *Renderer) CoordinatesToWindow(x, y float32) (windowX, windowY float32, err error) {
 	ret := C.SDL_RenderCoordinatesToWindow(renderer.cptr(), C.float(x), C.float(y), (*C.float)(&windowX), (*C.float)(&windowY))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -607,7 +615,7 @@ func (renderer *Renderer) CoordinatesToWindow(x, y float32) (windowX, windowY fl
 // (https://wiki.libsdl.org/SDL3/SDL_ConvertEventToRenderCoordinates)
 func (renderer *Renderer) ConvertEventCoordinates(event Event) error {
 	ret := C.SDL_ConvertEventToRenderCoordinates(renderer.cptr(), event.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -617,7 +625,7 @@ func (renderer *Renderer) ConvertEventCoordinates(event Event) error {
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderViewport)
 func (renderer *Renderer) SetViewport(rect *Rect) (err error) {
 	ret := C.SDL_SetRenderViewport(renderer.cptr(), rect.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -627,7 +635,7 @@ func (renderer *Renderer) SetViewport(rect *Rect) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderViewport)
 func (renderer *Renderer) GetViewport() (rect Rect, err error) {
 	ret := C.SDL_GetRenderViewport(renderer.cptr(), rect.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -636,14 +644,14 @@ func (renderer *Renderer) GetViewport() (rect Rect, err error) {
 // Return whether an explicit rectangle was set as the viewport.
 // (https://wiki.libsdl.org/SDL3/SDL_RenderViewportSet)
 func (renderer *Renderer) ViewportSet() bool {
-	return C.SDL_RenderViewportSet(renderer.cptr()) == C.SDL_TRUE
+	return C.SDL_RenderViewportSet(renderer.cptr()) == true
 }
 
 // Set the clip rectangle for rendering on the specified target.
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderClipRect)
 func (renderer *Renderer) SetClipRect(rect Rect) error {
 	ret := C.SDL_SetRenderClipRect(renderer.cptr(), rect.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -653,7 +661,7 @@ func (renderer *Renderer) SetClipRect(rect Rect) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderClipRect)
 func (renderer *Renderer) GetClipRect() (rect Rect, err error) {
 	ret := C.SDL_GetRenderClipRect(renderer.cptr(), rect.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -663,17 +671,17 @@ func (renderer *Renderer) GetClipRect() (rect Rect, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderClipEnabled)
 func (renderer *Renderer) ClipEnabled() (bool, error) {
 	ret := C.SDL_RenderClipEnabled(renderer.cptr())
-	if ret != C.SDL_TRUE {
+	if ret != true {
 		return false, GetError()
 	}
-	return ret == C.SDL_TRUE, nil
+	return ret == true, nil
 }
 
 // Set the drawing scale for rendering on the current target.
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderScale)
 func (renderer *Renderer) SetScale(scaleX, scaleY float32) error {
 	ret := C.SDL_SetRenderScale(renderer.cptr(), C.float(scaleX), C.float(scaleY))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -683,7 +691,7 @@ func (renderer *Renderer) SetScale(scaleX, scaleY float32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderScale)
 func (renderer *Renderer) GetScale() (scaleX, scaleY float32, err error) {
 	ret := C.SDL_GetRenderScale(renderer.cptr(), (*C.float)(&scaleX), (*C.float)(&scaleY))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -693,7 +701,7 @@ func (renderer *Renderer) GetScale() (scaleX, scaleY float32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderDrawColor)
 func (renderer *Renderer) SetDrawColor(r, g, b, a uint8) error {
 	ret := C.SDL_SetRenderDrawColor(renderer.cptr(), C.Uint8(r), C.Uint8(g), C.Uint8(b), C.Uint8(a))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -703,7 +711,7 @@ func (renderer *Renderer) SetDrawColor(r, g, b, a uint8) error {
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderDrawColorFloat)
 func (renderer *Renderer) SetDrawColorFloat(r, g, b, a float32) error {
 	ret := C.SDL_SetRenderDrawColorFloat(renderer.cptr(), C.float(r), C.float(g), C.float(b), C.float(a))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -713,7 +721,7 @@ func (renderer *Renderer) SetDrawColorFloat(r, g, b, a float32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderDrawColor)
 func (renderer *Renderer) GetDrawColor() (r, g, b, a uint8, err error) {
 	ret := C.SDL_GetRenderDrawColor(renderer.cptr(), (*C.Uint8)(&r), (*C.Uint8)(&g), (*C.Uint8)(&b), (*C.Uint8)(&a))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -723,7 +731,7 @@ func (renderer *Renderer) GetDrawColor() (r, g, b, a uint8, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderDrawColorFloat)
 func (renderer *Renderer) GetDrawColorFloat() (r, g, b, a float32, err error) {
 	ret := C.SDL_GetRenderDrawColorFloat(renderer.cptr(), (*C.float)(&r), (*C.float)(&g), (*C.float)(&b), (*C.float)(&a))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -733,7 +741,7 @@ func (renderer *Renderer) GetDrawColorFloat() (r, g, b, a float32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderColorScale)
 func (renderer *Renderer) SetColorScale(scale float32) error {
 	ret := C.SDL_SetRenderColorScale(renderer.cptr(), C.float(scale))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -743,7 +751,7 @@ func (renderer *Renderer) SetColorScale(scale float32) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderColorScale)
 func (renderer *Renderer) GetColorScale() (scale float32, err error) {
 	ret := C.SDL_GetRenderColorScale(renderer.cptr(), (*C.float)(&scale))
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -753,7 +761,7 @@ func (renderer *Renderer) GetColorScale() (scale float32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderDrawBlendMode)
 func (renderer *Renderer) SetDrawBlendMode(mode BlendMode) error {
 	ret := C.SDL_SetRenderDrawBlendMode(renderer.cptr(), mode.c())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -763,7 +771,7 @@ func (renderer *Renderer) SetDrawBlendMode(mode BlendMode) error {
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderDrawBlendMode)
 func (renderer *Renderer) GetDrawBlendMode() (mode BlendMode, err error) {
 	ret := C.SDL_GetRenderDrawBlendMode(renderer.cptr(), mode.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -773,7 +781,7 @@ func (renderer *Renderer) GetDrawBlendMode() (mode BlendMode, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderClear)
 func (renderer *Renderer) Clear() error {
 	ret := C.SDL_RenderClear(renderer.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -783,7 +791,7 @@ func (renderer *Renderer) Clear() error {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderPoint)
 func (renderer *Renderer) Point(x, y float32) error {
 	ret := C.SDL_RenderPoint(renderer.cptr(), C.float(x), C.float(y))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -794,7 +802,7 @@ func (renderer *Renderer) Point(x, y float32) error {
 func (renderer *Renderer) Points(points []Point) error {
 	pointsPtr := unsafe.Pointer(unsafe.SliceData(points))
 	ret := C.SDL_RenderPoints(renderer.cptr(), (*C.SDL_FPoint)(pointsPtr), C.int(len(points)))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -804,7 +812,7 @@ func (renderer *Renderer) Points(points []Point) error {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderLine)
 func (renderer *Renderer) Line(x1, y1, x2, y2 float32) error {
 	ret := C.SDL_RenderLine(renderer.cptr(), C.float(x1), C.float(y1), C.float(x2), C.float(y2))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -816,7 +824,7 @@ func (renderer *Renderer) Line(x1, y1, x2, y2 float32) error {
 func (renderer *Renderer) Lines(points []Point) error {
 	pointsPtr := unsafe.Pointer(unsafe.SliceData(points))
 	ret := C.SDL_RenderLines(renderer.cptr(), (*C.SDL_FPoint)(pointsPtr), C.int(len(points)))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -826,7 +834,7 @@ func (renderer *Renderer) Lines(points []Point) error {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderRect)
 func (renderer *Renderer) Rect(rect *FRect) error {
 	ret := C.SDL_RenderRect(renderer.cptr(), rect.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -838,7 +846,7 @@ func (renderer *Renderer) Rect(rect *FRect) error {
 func (renderer *Renderer) Rects(rects []FRect) error {
 	rectsPtr := unsafe.Pointer(unsafe.SliceData(rects))
 	ret := C.SDL_RenderRects(renderer.cptr(), (*C.SDL_FRect)(rectsPtr), C.int(len(rects)))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -849,7 +857,7 @@ func (renderer *Renderer) Rects(rects []FRect) error {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderFillRect)
 func (renderer *Renderer) FillRect(rect *FRect) error {
 	ret := C.SDL_RenderFillRect(renderer.cptr(), rect.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -861,7 +869,7 @@ func (renderer *Renderer) FillRect(rect *FRect) error {
 func (renderer *Renderer) FillRects(rects []FRect) error {
 	rectsPtr := unsafe.Pointer(unsafe.SliceData(rects))
 	ret := C.SDL_RenderFillRects(renderer.cptr(), (*C.SDL_FRect)(rectsPtr), C.int(len(rects)))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -872,7 +880,7 @@ func (renderer *Renderer) FillRects(rects []FRect) error {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderTexture)
 func (renderer *Renderer) Texture(texture *Texture, srcRect, dstRect *FRect) error {
 	ret := C.SDL_RenderTexture(renderer.cptr(), texture.cptr(), srcRect.cptr(), dstRect.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -883,7 +891,7 @@ func (renderer *Renderer) Texture(texture *Texture, srcRect, dstRect *FRect) err
 // // (https://wiki.libsdl.org/SDL3/SDL_RenderTextureRotated)
 func (renderer *Renderer) TextureRotated(texture *Texture, srcRect, dstRect *FRect, angle float64, center *FPoint, flip FlipMode) error {
 	ret := C.SDL_RenderTextureRotated(renderer.cptr(), texture.cptr(), srcRect.cptr(), dstRect.cptr(), C.double(angle), center.cptr(), flip.c())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -894,7 +902,7 @@ func (renderer *Renderer) TextureRotated(texture *Texture, srcRect, dstRect *FRe
 // (https://wiki.libsdl.org/SDL3/SDL_RenderTextureTiled)
 func (renderer *Renderer) TextureTiled(texture *Texture, srcRect *FRect, scale float32, dstRect *FRect) error {
 	ret := C.SDL_RenderTextureTiled(renderer.cptr(), texture.cptr(), srcRect.cptr(), C.float(scale), dstRect.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -903,9 +911,9 @@ func (renderer *Renderer) TextureTiled(texture *Texture, srcRect *FRect, scale f
 // Perform a scaled copy using the 9-grid algorithm to the current rendering
 // target at subpixel precision.
 // (https://wiki.libsdl.org/SDL3/SDL_RenderTexture9Grid)
-func (renderer *Renderer) Texture9Grid(texture *Texture, srcRect FRect, cornerSize float32, scale float32, dstRect FRect) error {
-	ret := C.SDL_RenderTexture9Grid(renderer.cptr(), texture.cptr(), srcRect.cptr(), C.float(cornerSize), C.float(scale), dstRect.cptr())
-	if ret < 0 {
+func (renderer *Renderer) Texture9Grid(texture *Texture, srcRect FRect, leftWidth, rightWidth, topHeight, bottomHeight float32, scale float32, dstRect FRect) error {
+	ret := C.SDL_RenderTexture9Grid(renderer.cptr(), texture.cptr(), srcRect.cptr(), C.float(leftWidth), C.float(rightWidth), C.float(topHeight), C.float(bottomHeight), C.float(scale), dstRect.cptr())
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -918,7 +926,7 @@ func (renderer *Renderer) Geometry(texture *Texture, vertices []Vertex, indices 
 	verticesPtr := unsafe.Pointer(unsafe.SliceData(vertices))
 	indicesPtr := unsafe.Pointer(unsafe.SliceData(indices))
 	ret := C.SDL_RenderGeometry(renderer.cptr(), texture.cptr(), (*C.SDL_Vertex)(verticesPtr), C.int(len(vertices)), (*C.int)(indicesPtr), C.int(len(indices)))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -944,7 +952,7 @@ func (renderer *Renderer) GeometryRaw(texture *Texture, xy []float32, xyStride i
 		(*C.float)(uvPtr), C.int(uvStride),
 		C.int(count),
 		indicesPtr, C.int(len(indices)), C.int(idxSize))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -964,7 +972,7 @@ func (renderer *Renderer) ReadPixels(rect Rect) (surface *Surface, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_RenderPresent)
 func (renderer *Renderer) Present() error {
 	ret := C.SDL_RenderPresent(renderer.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -987,7 +995,7 @@ func (renderer *Renderer) Destroy() {
 // (https://wiki.libsdl.org/SDL3/SDL_FlushRenderer)
 func (renderer *Renderer) Flush() error {
 	ret := C.SDL_FlushRenderer(renderer.cptr())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -1011,7 +1019,7 @@ func (renderer *Renderer) GetMetalCommandEncoder() (commandEncoder unsafe.Pointe
 // (https://wiki.libsdl.org/SDL3/SDL_AddVulkanRenderSemaphores)
 func (renderer *Renderer) AddVulkanSemaphores(waitStageMask uint32, waitSemaphore, signalSemaphore int64) error {
 	ret := C.SDL_AddVulkanRenderSemaphores(renderer.cptr(), C.Uint32(waitStageMask), C.Sint64(waitSemaphore), C.Sint64(signalSemaphore))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -1021,7 +1029,7 @@ func (renderer *Renderer) AddVulkanSemaphores(waitStageMask uint32, waitSemaphor
 // (https://wiki.libsdl.org/SDL3/SDL_SetRenderVSync)
 func (renderer *Renderer) SetVSync(vsync int32) error {
 	ret := C.SDL_SetRenderVSync(renderer.cptr(), C.int(vsync))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -1035,9 +1043,22 @@ const (
 // Get VSync of the given renderer.
 // (https://wiki.libsdl.org/SDL3/SDL_GetRenderVSync)
 func (renderer *Renderer) GetVSync() (vsync int32, err error) {
-	ret := int32(C.SDL_GetRenderVSync(renderer.cptr(), (*C.int)(&vsync)))
-	if ret < 0 {
+	ret := C.SDL_GetRenderVSync(renderer.cptr(), (*C.int)(&vsync))
+	if !ret {
 		err = GetError()
 	}
 	return
+}
+
+// The size, in pixels, of a single SDL_RenderDebugText() character.
+const DEBUG_TEXT_FONT_CHARACTER_SIZE = C.SDL_DEBUG_TEXT_FONT_CHARACTER_SIZE
+
+// Draw debug text to an SDL_Renderer.
+// (https://wiki.libsdl.org/SDL3/SDL_RenderDebugText)
+func (renderer *Renderer) DebugText(x float32, y float32, str string) error {
+	ret := C.SDL_RenderDebugText(renderer.cptr(), C.float(x), C.float(y), C.CString(str))
+	if !ret {
+		return GetError()
+	}
+	return nil
 }

@@ -48,6 +48,19 @@ const (
 	CAMERA_POSITION_BACK_FACING  = CameraPosition(C.SDL_CAMERA_POSITION_BACK_FACING)
 )
 
+func (p CameraPosition) String() string {
+	switch p {
+	case CAMERA_POSITION_UNKNOWN:
+		return "UNKNOWN_FACING"
+	case CAMERA_POSITION_FRONT_FACING:
+		return "FRONT_FACING"
+	case CAMERA_POSITION_BACK_FACING:
+		return "BACK_FACING"
+	default:
+		return "Unknown CameraPosition"
+	}
+}
+
 // Use this function to get the number of built-in camera drivers.
 // (https://wiki.libsdl.org/SDL3/SDL_GetNumCameraDrivers)
 func GetNumCameraDrivers() int32 {
@@ -74,9 +87,15 @@ func GetCameras() ([]CameraID, error) {
 	if ret == nil {
 		return nil, GetError()
 	}
-	return unsafe.Slice((*CameraID)(ret), int(count)), nil
+	// ret needs to be freed so we need to copy it
+	defer C.SDL_free(unsafe.Pointer(ret))
+	cSlice := unsafe.Slice((*CameraID)(ret), int(count))
+	goSlice := make([]CameraID, len(cSlice))
+	copy(goSlice, cSlice)
+	return goSlice, nil
 }
 
+// TODO: Needs tested...
 // Get the list of native formats/sizes a camera supports.
 // (https://wiki.libsdl.org/SDL3/SDL_GetCameraSupportedFormats)
 func GetCameraSupportedFormats(devid CameraID) ([]*CameraSpec, error) {
@@ -85,7 +104,12 @@ func GetCameraSupportedFormats(devid CameraID) ([]*CameraSpec, error) {
 	if ret == nil {
 		return nil, GetError()
 	}
-	return unsafe.Slice((**CameraSpec)(unsafe.Pointer(ret)), int(count)), nil
+	// ret needs to be freed so we need to copy it
+	defer C.SDL_free(unsafe.Pointer(ret))
+	cSlice := unsafe.Slice((**CameraSpec)(unsafe.Pointer(ret)), int(count))
+	goSlice := make([]*CameraSpec, len(cSlice))
+	copy(goSlice, cSlice)
+	return goSlice, nil
 }
 
 // Get the human-readable device name for a camera.
@@ -116,13 +140,13 @@ func OpenCamera(devid CameraID, spec CameraSpec) (*Camera, error) {
 
 // Query if camera access has been approved by the user.
 // (https://wiki.libsdl.org/SDL3/SDL_GetCameraPermissionState)
-func GetCameraPermissionState(camera *Camera) int32 {
+func (camera *Camera) GetPermissionState() int32 {
 	return int32(C.SDL_GetCameraPermissionState(camera.cptr()))
 }
 
 // Get the instance ID of an opened camera.
 // (https://wiki.libsdl.org/SDL3/SDL_GetCameraID)
-func GetCameraID(camera *Camera) (CameraID, error) {
+func (camera *Camera) GetID() (CameraID, error) {
 	ret := C.SDL_GetCameraID(camera.cptr())
 	if ret == 0 {
 		return 0, GetError()
@@ -132,7 +156,7 @@ func GetCameraID(camera *Camera) (CameraID, error) {
 
 // Get the properties associated with an opened camera.
 // (https://wiki.libsdl.org/SDL3/SDL_GetCameraProperties)
-func GetCameraProperties(camera *Camera) (PropertiesID, error) {
+func (camera *Camera) GetProperties() (PropertiesID, error) {
 	ret := C.SDL_GetCameraProperties(camera.cptr())
 	if ret == 0 {
 		return 0, GetError()
@@ -142,17 +166,17 @@ func GetCameraProperties(camera *Camera) (PropertiesID, error) {
 
 // Get the spec that a camera is using when generating images.
 // (https://wiki.libsdl.org/SDL3/SDL_GetCameraFormat)
-func GetCameraFormat(camera *Camera) (spec CameraSpec, err error) {
+func (camera *Camera) GetFormat() (spec CameraSpec, err error) {
 	ret := C.SDL_GetCameraFormat(camera.cptr(), spec.cptr())
-	if ret < 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
 }
 
-// Acquire a frame.
+// Acquire a frame. DO NOT USE SURFACE DESTROY! Use ReleaseCameraFrame instead.
 // (https://wiki.libsdl.org/SDL3/SDL_AcquireCameraFrame)
-func AcquireCameraFrame(camera *Camera) (surface *Surface, timestamp uint64, err error) {
+func (camera *Camera) AcquireFrame() (surface *Surface, timestamp uint64, err error) {
 	surface = (*Surface)(unsafe.Pointer(C.SDL_AcquireCameraFrame(camera.cptr(), (*C.Uint64)(unsafe.Pointer(&timestamp)))))
 	if surface == nil {
 		err = GetError()
@@ -162,17 +186,13 @@ func AcquireCameraFrame(camera *Camera) (surface *Surface, timestamp uint64, err
 
 // Release a frame of video acquired from a camera.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseCameraFrame)
-func ReleaseCameraFrame(camera *Camera, surface *Surface) error {
-	ret := C.SDL_ReleaseCameraFrame(camera.cptr(), surface.cptr())
-	if ret < 0 {
-		return GetError()
-	}
-	return nil
+func (camera *Camera) ReleaseCameraFrame(surface *Surface) {
+	C.SDL_ReleaseCameraFrame(camera.cptr(), surface.cptr())
 }
 
 // Use this function to shut down camera processing and close the camera
 // device.
 // (https://wiki.libsdl.org/SDL3/SDL_CloseCamera)
-func CloseCamera(camera *Camera) {
+func (camera *Camera) Close() {
 	C.SDL_CloseCamera(camera.cptr())
 }

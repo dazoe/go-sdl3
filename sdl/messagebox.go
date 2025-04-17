@@ -16,8 +16,8 @@ const (
 // ShowSimpleMessageBox Display a simple modal message box
 // (https://wiki.libsdl.org/SDL3/SDL_ShowSimpleMessageBox)
 func ShowSimpleMessageBox(flags MessageBoxFlags, title string, message string, window *Window) error {
-	if C.SDL_ShowSimpleMessageBox(C.SDL_MessageBoxFlags(flags), C.CString(title),
-		C.CString(message), nil) != 0 {
+	if !C.SDL_ShowSimpleMessageBox(C.SDL_MessageBoxFlags(flags), C.CString(title),
+		C.CString(message), nil) {
 		return GetError()
 	}
 	return nil

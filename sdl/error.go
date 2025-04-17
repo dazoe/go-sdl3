@@ -15,42 +15,49 @@ import (
 	"unsafe"
 )
 
+// # CategoryError
+// (https://wiki.libsdl.org/SDL3/CategoryError)
+
 type errorSDL string
 
 func (e errorSDL) Error() string {
 	return string(e)
 }
 
-// SetError Set the SDL error message
+// Set the SDL error message for the current thread.
 // (https://wiki.libsdl.org/SDL3/SDL_SetError)
-func SetError(err error) {
-	ClearError()
-	if err != nil {
-		errMsg := C.CString(err.Error())
-		defer C.free(unsafe.Pointer(errMsg))
-		C.GoSetError(errMsg)
-	}
+func SetError(format string, a ...any) {
+	// ClearError()
+	errStr := fmt.Sprintf(format, a...)
+	cstr := C.CString(errStr)
+	defer C.free(unsafe.Pointer(cstr))
+	C.GoSetError(cstr)
 }
 
-// GetError Retrieve a message about the last error that occurred
+// Set an error indicating that memory allocation failed.
+// (https://wiki.libsdl.org/SDL3/SDL_OutOfMemory)
+func OutOfMemory() {
+	C.SDL_OutOfMemory()
+}
+
+// Retrieve a message about the last error that occurred on the current thread.
 // (https://wiki.libsdl.org/SDL3/SDL_GetError)
 func GetError() error {
-	errStr := C.SDL_GetError()
-	if errStr != nil {
-		goStr := C.GoString(errStr)
-		if len(goStr) > 0 {
-			return errorSDL(goStr)
-		}
+	ret := C.SDL_GetError()
+	// always returns a string
+	if *ret != 0 {
+		return errorSDL(C.GoString(ret))
 	}
 	return nil
 }
 
-// ClearError Clear any previous error message
+// Clear any previous error message for this thread.
 // (https://wiki.libsdl.org/SDL3/SDL_ClearError)
 func ClearError() {
 	C.SDL_ClearError()
 }
 
+// Internal sdl error functions...
 func Unsupported() error {
 	return errorSDL("That operation is not supported")
 }

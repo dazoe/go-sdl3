@@ -2,7 +2,10 @@ package sdl
 
 //#include <SDL3/SDL_pixels.h>
 import "C"
-import "unsafe"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // A fully opaque 8-bit alpha value
 const SDL_ALPHA_OPAQUE = 255
@@ -368,13 +371,20 @@ func (pfd *PixelFormatDetails) cptr() *C.SDL_PixelFormatDetails {
 func (format PixelFormat) GetName() string {
 	return C.GoString(C.SDL_GetPixelFormatName(C.SDL_PixelFormat(format)))
 }
+func (format PixelFormat) String() string {
+	name := format.GetName()
+	if name == "" {
+		return fmt.Sprintf("0x%x", format)
+	}
+	return name
+}
 
 // Convert one of the enumerated pixel formats to a bpp value and RGBA masks.
 // (https://wiki.libsdl.org/SDL3/SDL_GetMasksForPixelFormat)
 func (format PixelFormat) GetMasks() (bpp int32, RMask, GMask, BMask, AMask uint32, err error) {
 	ret := C.SDL_GetMasksForPixelFormat(C.SDL_PixelFormat(format),
 		(*C.int)(&bpp), (*C.Uint32)(&RMask), (*C.Uint32)(&GMask), (*C.Uint32)(&BMask), (*C.Uint32)(&AMask))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 		return
 	}
@@ -415,7 +425,7 @@ func (palette *Palette) SetColors(colors []Color) error {
 		palette.cptr(),
 		colors[0].cptr(),
 		0, C.int(len(colors)))
-	if ret != 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil

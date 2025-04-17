@@ -8,8 +8,9 @@ func init() {
 	runtime.LockOSThread()
 }
 
+// TODO: still needed?
 // Utility functions....
-func sdlBool(b bool) C.int {
+func sdlBool(b bool) int {
 	if b {
 		return 1
 	}

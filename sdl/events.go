@@ -15,18 +15,6 @@ import "C"
 // # CategoryEvents
 // (https://wiki.libsdl.org/SDL3/CategoryEvents)
 
-/* General keyboard/mouse/pen state definitions */
-
-type KeyState uint8
-
-// A value that signifies a button is no longer pressed.
-// (https://wiki.libsdl.org/SDL3/SDL_RELEASED)
-const SDL_RELEASED = KeyState(0)
-
-// A value that signifies a button has been pressed down.
-// (https://wiki.libsdl.org/SDL3/SDL_PRESSED)
-const SDL_PRESSED = KeyState(1)
-
 // The types of events that can be delivered.
 // (https://wiki.libsdl.org/SDL3/SDL_EventType)
 type EventType C.SDL_EventType
@@ -92,6 +80,7 @@ const (
 	EVENT_WINDOW_MOVED                 = EventType(C.SDL_EVENT_WINDOW_MOVED)                 /**< Window has been moved to data1, data2 */
 	EVENT_WINDOW_RESIZED               = EventType(C.SDL_EVENT_WINDOW_RESIZED)               /**< Window has been resized to data1xdata2 */
 	EVENT_WINDOW_PIXEL_SIZE_CHANGED    = EventType(C.SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED)    /**< The pixel size of the window has changed to data1xdata2 */
+	EVENT_WINDOW_METAL_VIEW_RESIZED    = EventType(C.SDL_EVENT_WINDOW_METAL_VIEW_RESIZED)    /**< The pixel size of a Metal view associated with the window has changed */
 	EVENT_WINDOW_MINIMIZED             = EventType(C.SDL_EVENT_WINDOW_MINIMIZED)             /**< Window has been minimized */
 	EVENT_WINDOW_MAXIMIZED             = EventType(C.SDL_EVENT_WINDOW_MAXIMIZED)             /**< Window has been maximized */
 	EVENT_WINDOW_RESTORED              = EventType(C.SDL_EVENT_WINDOW_RESTORED)              /**< Window has been restored to normal size and position */
@@ -104,6 +93,7 @@ const (
 	EVENT_WINDOW_ICCPROF_CHANGED       = EventType(C.SDL_EVENT_WINDOW_ICCPROF_CHANGED)       /**< The ICC profile of the window's display has changed */
 	EVENT_WINDOW_DISPLAY_CHANGED       = EventType(C.SDL_EVENT_WINDOW_DISPLAY_CHANGED)       /**< Window has been moved to display data1 */
 	EVENT_WINDOW_DISPLAY_SCALE_CHANGED = EventType(C.SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED) /**< Window display scale has been changed */
+	EVENT_WINDOW_SAFE_AREA_CHANGED     = EventType(C.SDL_EVENT_WINDOW_SAFE_AREA_CHANGED)     /**< The window safe area has been changed */
 	EVENT_WINDOW_OCCLUDED              = EventType(C.SDL_EVENT_WINDOW_OCCLUDED)              /**< The window has been occluded */
 	EVENT_WINDOW_ENTER_FULLSCREEN      = EventType(C.SDL_EVENT_WINDOW_ENTER_FULLSCREEN)      /**< The window has entered fullscreen mode */
 	EVENT_WINDOW_LEAVE_FULLSCREEN      = EventType(C.SDL_EVENT_WINDOW_LEAVE_FULLSCREEN)      /**< The window has left fullscreen mode */
@@ -111,8 +101,8 @@ const (
 	  If this message is being handled in an event watcher, the window handle is still valid
 	  and can still be used to retrieve any userdata associated with the window. Otherwise,
 	  the handle has already been destroyed and all resources associated with it are invalid */
-	EVENT_WINDOW_PEN_ENTER         = EventType(C.SDL_EVENT_WINDOW_PEN_ENTER)         /**< Window has gained focus of the pressure-sensitive pen with ID "data1" */
-	EVENT_WINDOW_PEN_LEAVE         = EventType(C.SDL_EVENT_WINDOW_PEN_LEAVE)         /**< Window has lost focus of the pressure-sensitive pen with ID "data1" */
+	// EVENT_WINDOW_PEN_ENTER         = EventType(C.SDL_EVENT_WINDOW_PEN_ENTER)         /**< Window has gained focus of the pressure-sensitive pen with ID "data1" */
+	// EVENT_WINDOW_PEN_LEAVE         = EventType(C.SDL_EVENT_WINDOW_PEN_LEAVE)         /**< Window has lost focus of the pressure-sensitive pen with ID "data1" */
 	EVENT_WINDOW_HDR_STATE_CHANGED = EventType(C.SDL_EVENT_WINDOW_HDR_STATE_CHANGED) /**< Window HDR properties have changed */
 	EVENT_WINDOW_FIRST             = EventType(C.SDL_EVENT_WINDOW_FIRST)
 	EVENT_WINDOW_LAST              = EventType(C.SDL_EVENT_WINDOW_LAST)
@@ -186,11 +176,14 @@ const (
 	EVENT_SENSOR_UPDATE = EventType(C.SDL_EVENT_SENSOR_UPDATE) /**< A sensor was updated */
 
 	/* Pressure-sensitive pen events */
-	EVENT_PEN_DOWN        = EventType(C.SDL_EVENT_PEN_DOWN)        /**< Pressure-sensitive pen touched drawing surface */
-	EVENT_PEN_UP          = EventType(C.SDL_EVENT_PEN_UP)          /**< Pressure-sensitive pen stopped touching drawing surface */
-	EVENT_PEN_MOTION      = EventType(C.SDL_EVENT_PEN_MOTION)      /**< Pressure-sensitive pen moved, or angle/pressure changed */
-	EVENT_PEN_BUTTON_DOWN = EventType(C.SDL_EVENT_PEN_BUTTON_DOWN) /**< Pressure-sensitive pen button pressed */
-	EVENT_PEN_BUTTON_UP   = EventType(C.SDL_EVENT_PEN_BUTTON_UP)   /**< Pressure-sensitive pen button released */
+	EVENT_PEN_PROXIMITY_IN  = EventType(C.SDL_EVENT_PEN_PROXIMITY_IN)  /**< Pressure-sensitive pen has become available */
+	EVENT_PEN_PROXIMITY_OUT = EventType(C.SDL_EVENT_PEN_PROXIMITY_OUT) /**< Pressure-sensitive pen has become unavailable */
+	EVENT_PEN_DOWN          = EventType(C.SDL_EVENT_PEN_DOWN)          /**< Pressure-sensitive pen touched drawing surface */
+	EVENT_PEN_UP            = EventType(C.SDL_EVENT_PEN_UP)            /**< Pressure-sensitive pen stopped touching drawing surface */
+	EVENT_PEN_BUTTON_DOWN   = EventType(C.SDL_EVENT_PEN_BUTTON_DOWN)   /**< Pressure-sensitive pen button pressed */
+	EVENT_PEN_BUTTON_UP     = EventType(C.SDL_EVENT_PEN_BUTTON_UP)     /**< Pressure-sensitive pen button released */
+	EVENT_PEN_MOTION        = EventType(C.SDL_EVENT_PEN_MOTION)        /**< Pressure-sensitive pen is moving on the tablet */
+	EVENT_PEN_AXIS          = EventType(C.SDL_EVENT_PEN_AXIS)          /**< Pressure-sensitive pen angle/pressure/etc changed */
 
 	/* Camera hotplug events */
 	EVENT_CAMERA_DEVICE_ADDED    = EventType(C.SDL_EVENT_CAMERA_DEVICE_ADDED)    /**< A new camera device is available */
@@ -201,6 +194,7 @@ const (
 	/* Render events */
 	EVENT_RENDER_TARGETS_RESET = EventType(C.SDL_EVENT_RENDER_TARGETS_RESET) /**< The render targets have been reset and their contents need to be updated */
 	EVENT_RENDER_DEVICE_RESET  = EventType(C.SDL_EVENT_RENDER_DEVICE_RESET)  /**< The device has been reset and all textures need to be recreated */
+	EVENT_RENDER_DEVICE_LOST   = EventType(C.SDL_EVENT_RENDER_DEVICE_LOST)   /**< The device has been lost and can't be recovered. */
 
 	/* Internal events */
 	EVENT_POLL_SENTINEL = EventType(C.SDL_EVENT_POLL_SENTINEL) /**< Signals the end of an event poll cycle */
@@ -212,7 +206,7 @@ const (
 	EVENT_LAST = EventType(C.SDL_EVENT_LAST)
 
 	/* This just makes sure the enum is the size of Uint32 */
-	EVENT_ENUM_PADDING = EventType(C.SDL_EVENT_ENUM_PADDING)
+	// EVENT_ENUM_PADDING = EventType(C.SDL_EVENT_ENUM_PADDING)
 )
 
 // Fields shared by every event
@@ -262,8 +256,8 @@ type KeyboardEvent struct {
 	Key      Keycode    /**< SDL virtual key code */
 	Mod      Keymod     /**< current key modifiers */
 	Raw      uint16     /**< The platform dependent scancode for this event */
-	State    KeyState   /**< SDL_PRESSED or SDL_RELEASED */
-	Repeat   uint8      /**< Non-zero if this is a key repeat */
+	Down     bool       /**< SDL_PRESSED or SDL_RELEASED */
+	Repeat   bool       /**< Non-zero if this is a key repeat */
 }
 
 // Keyboard text editing event structure (event.edit.*)
@@ -275,17 +269,19 @@ type TextEditingEvent struct {
 	Start    int32    /**< The start cursor of selected editing text, or -1 if not set */
 	Length   int32    /**< The length of selected editing text, or -1 if not set */
 }
+type cTextEditingEvent C.SDL_TextEditingEvent
 
 // Keyboard IME candidates event structure (event.edit_candidates.*)
 // (https://wiki.libsdl.org/SDL3/SDL_TextEditingCandidatesEvent)
 type TextEditingCandidatesEvent struct {
 	CommonEvent
-	WindowID           WindowID       /**< The window with keyboard focus, if any */
-	Candidates         unsafe.Pointer /**< The list of candidates, or NULL if there are no candidates available */
-	Num_candidates     int32          /**< The number of strings in `candidates` */
-	Selected_candidate int32          /**< The index of the selected candidate, or -1 if no candidate is selected */
-	Horizontal         bool           /**< SDL_TRUE if the list is horizontal, SDL_FALSE if it's vertical */
+	WindowID   WindowID /**< The window with keyboard focus, if any */
+	Candidates []string /**< The list of candidates, or NULL if there are no candidates available */
+	// Num_candidates     int32    /**< The number of strings in `candidates` */
+	SelectedCandidate int32 /**< The index of the selected candidate, or -1 if no candidate is selected */
+	Horizontal        bool  /**< SDL_TRUE if the list is horizontal, SDL_FALSE if it's vertical */
 }
+type cTextEditingCandidatesEvent C.SDL_TextEditingCandidatesEvent
 
 // Keyboard text input event structure (event.text.*)
 // (https://wiki.libsdl.org/SDL3/SDL_TextInputEvent)
@@ -294,6 +290,7 @@ type TextInputEvent struct {
 	WindowID WindowID /**< The window with keyboard focus, if any */
 	Text     string   /**< The input text, UTF-8 encoded */
 }
+type cTextInputEvent C.SDL_TextInputEvent
 
 // Mouse device event structure (event.mdevice.*)
 // (https://wiki.libsdl.org/SDL3/SDL_MouseDeviceEvent)
@@ -322,9 +319,9 @@ type MouseButtonEvent struct {
 	WindowID WindowID /**< The window with mouse focus, if any */
 	Which    MouseID  /**< The mouse instance id, SDL_TOUCH_MOUSEID, or SDL_PEN_MOUSEID */
 	Button   uint8    /**< The mouse button index */
-	State    uint8    /**< SDL_PRESSED or SDL_RELEASED */
+	Down     bool     /**< true if the button is pressed */
 	Clicks   uint8    /**< 1 for single-click, 2 for double-click, etc. */
-	Padding  uint8
+	_        uint8
 	X        float32 /**< X coordinate, relative to window */
 	Y        float32 /**< Y coordinate, relative to window */
 }
@@ -385,7 +382,7 @@ type JoyButtonEvent struct {
 	CommonEvent
 	Which  JoystickID /**< The joystick instance id */
 	Button uint8      /**< The joystick button index */
-	State  uint8      /**< SDL_PRESSED or SDL_RELEASED */
+	Down   bool       /**< true if the button is pressed */
 	_      uint8      // padding
 	_      uint8      // padding
 }
@@ -425,7 +422,7 @@ type GamepadButtonEvent struct {
 	CommonEvent
 	Which  JoystickID /**< The joystick instance id */
 	Button uint8      /**< The gamepad button (SDL_GamepadButton) */
-	State  uint8      /**< SDL_PRESSED or SDL_RELEASED */
+	Down   bool       /**< true if the button is pressed */
 	_      uint8      // padding
 	_      uint8      // padding
 }
@@ -453,10 +450,10 @@ type GamepadTouchpadEvent struct {
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadSensorEvent)
 type GamepadSensorEvent struct {
 	CommonEvent
-	Which            JoystickID /**< The joystick instance id */
-	Sensor           int32      /**< The type of the sensor, one of the values of SDL_SensorType */
-	Data             [3]float32 /**< Up to 3 values from the sensor, as defined in SDL_sensor.h */
-	Sensor_timestamp uint64     /**< The timestamp of the sensor reading in nanoseconds, not necessarily synchronized with the system clock */
+	Which           JoystickID /**< The joystick instance id */
+	Sensor          int32      /**< The type of the sensor, one of the values of SDL_SensorType */
+	Data            [3]float32 /**< Up to 3 values from the sensor, as defined in SDL_sensor.h */
+	SensorTimestamp uint64     /**< The timestamp of the sensor reading in nanoseconds, not necessarily synchronized with the system clock */
 }
 
 // Audio device event structure (event.adevice.*)
@@ -464,7 +461,7 @@ type GamepadSensorEvent struct {
 type AudioDeviceEvent struct {
 	CommonEvent
 	Which     AudioDeviceID /**< SDL_AudioDeviceID for the device being added or removed or changing */
-	Recording uint8         /**< zero if a playback device, non-zero if a recording device. */
+	Recording bool          /**< false if a playback device, true if a recording device. */
 	_         uint8         // padding
 	_         uint8         // padding
 	_         uint8         // padding
@@ -491,46 +488,62 @@ type TouchFingerEvent struct {
 	WindowID WindowID /**< The window underneath the finger, if any */
 }
 
-// Pressure-sensitive pen touched or stopped touching surface (event.ptip.*)
-// (https://wiki.libsdl.org/SDL3/SDL_PenTipEvent)
-type PenTipEvent struct {
+// Pressure-sensitive pen proximity event structure (event.pmotion.*)
+// (https://wiki.libsdl.org/SDL3/SDL_PenProximityEvent)
+type PenProximityEvent struct {
 	CommonEvent
-	WindowID  WindowID              /**< The window with pen focus, if any */
-	Which     PenID                 /**< The pen instance id */
-	Tip       uint8                 /**< SDL_PEN_TIP_INK when using a regular pen tip, or SDL_PEN_TIP_ERASER if the pen is being used as an eraser (e.g., flipped to use the eraser tip)  */
-	State     uint8                 /**< SDL_PRESSED on SDL_EVENT_PEN_DOWN and SDL_RELEASED on SDL_EVENT_PEN_UP */
-	Pen_state uint16                /**< Pen button masks (where SDL_BUTTON(1) is the first button, SDL_BUTTON(2) is the second button etc.), SDL_PEN_DOWN_MASK is set if the pen is touching the surface, and SDL_PEN_ERASER_MASK is set if the pen is (used as) an eraser. */
-	X         float32               /**< X coordinate, relative to window */
-	Y         float32               /**< Y coordinate, relative to window */
-	Axes      [PEN_NUM_AXES]float32 /**< Pen axes such as pressure and tilt (ordered as per SDL_PenAxis) */
+	WindowID WindowID /**< The window with mouse focus, if any */
+	Which    PenID    /**< The pen instance id */
 }
 
-// Pressure-sensitive pen motion / pressure / angle event structure// (event.pmotion.*)
+// Pressure-sensitive pen motion event structure (event.pmotion.*)
 // (https://wiki.libsdl.org/SDL3/SDL_PenMotionEvent)
 type PenMotionEvent struct {
 	CommonEvent
-	WindowID  WindowID              /**< The window with pen focus, if any */
-	Which     PenID                 /**< The pen instance id */
-	_         uint8                 // padding
-	_         uint8                 // padding
-	Pen_state uint16                /**< Pen button masks (where SDL_BUTTON(1) is the first button, SDL_BUTTON(2) is the second button etc.), SDL_PEN_DOWN_MASK is set if the pen is touching the surface, and SDL_PEN_ERASER_MASK is set if the pen is (used as) an eraser. */
-	X         float32               /**< X coordinate, relative to window */
-	Y         float32               /**< Y coordinate, relative to window */
-	Axes      [PEN_NUM_AXES]float32 /**< Pen axes such as pressure and tilt (ordered as per SDL_PenAxis) */
+	WindowID WindowID      /**< The window with mouse focus, if any */
+	Which    PenID         /**< The pen instance id */
+	PenState PenInputFlags /**< Complete pen input state at time of event */
+	X        float32       /**< X coordinate, relative to window */
+	Y        float32       /**< Y coordinate, relative to window */
+}
+
+// Pressure-sensitive pen touched event structure (event.ptouch.*)
+// (https://wiki.libsdl.org/SDL3/SDL_PenTouchEvent)
+type PenTouchEvent struct {
+	CommonEvent
+	WindowID WindowID      /**< The window with mouse focus, if any */
+	Which    PenID         /**< The pen instance id */
+	PenState PenInputFlags /**< Complete pen input state at time of event */
+	X        float32       /**< X coordinate, relative to window */
+	Y        float32       /**< Y coordinate, relative to window */
+	Eraser   bool          /**< true if eraser end is used (not all pens support this). */
+	Down     bool          /**< true if the pen is touching or false if the pen is lifted off */
 }
 
 // Pressure-sensitive pen button event structure (event.pbutton.*)
 // (https://wiki.libsdl.org/SDL3/SDL_PenButtonEvent)
 type PenButtonEvent struct {
 	CommonEvent
-	WindowID  WindowID              /**< The window with pen focus, if any */
-	Which     PenID                 /**< The pen instance id */
-	Button    uint8                 /**< The pen button index (1 represents the pen tip for compatibility with mouse events) */
-	State     uint8                 /**< SDL_PRESSED or SDL_RELEASED */
-	Pen_state uint16                /**< Pen button masks (where SDL_BUTTON(1) is the first button, SDL_BUTTON(2) is the second button etc.), SDL_PEN_DOWN_MASK is set if the pen is touching the surface, and SDL_PEN_ERASER_MASK is set if the pen is (used as) an eraser. */
-	X         float32               /**< X coordinate, relative to window */
-	Y         float32               /**< Y coordinate, relative to window */
-	Axes      [PEN_NUM_AXES]float32 /**< Pen axes such as pressure and tilt (ordered as per SDL_PenAxis) */
+	WindowID WindowID      /**< The window with mouse focus, if any */
+	Which    PenID         /**< The pen instance id */
+	PenState PenInputFlags /**< Complete pen input state at time of event */
+	X        float32       /**< X coordinate, relative to window */
+	Y        float32       /**< Y coordinate, relative to window */
+	Button   uint8         /**< The pen button index (first button is 1). */
+	Down     bool          /**< true if the button is pressed */
+}
+
+// Pressure-sensitive pen pressure / angle event structure (event.paxis.*)
+// (https://wiki.libsdl.org/SDL3/SDL_PenAxisEvent)
+type PenAxisEvent struct {
+	CommonEvent
+	WindowID WindowID      /**< The window with mouse focus, if any */
+	Which    PenID         /**< The pen instance id */
+	PenState PenInputFlags /**< Complete pen input state at time of event */
+	X        float32       /**< X coordinate, relative to window */
+	Y        float32       /**< Y coordinate, relative to window */
+	Axis     PenAxis       /**< Axis that has changed */
+	Value    float32       /**< New value of axis */
 }
 
 // An event used to drop text or request a file open by the system// (event.drop.*)
@@ -543,20 +556,25 @@ type DropEvent struct {
 	Source   string   /**< The source app that sent this drop event, or NULL if that isn't available */
 	Data     string   /**< The text for SDL_EVENT_DROP_TEXT and the file name for SDL_EVENT_DROP_FILE, NULL for other events */
 }
+type cDropEvent C.SDL_DropEvent
 
 // An event triggered when the clipboard contents have changed// (event.clipboard.*)
 // (https://wiki.libsdl.org/SDL3/SDL_ClipboardEvent)
 type ClipboardEvent struct {
 	CommonEvent
+	Owner bool /**< are we owning the clipboard (internal update) */
+	// NumMimeTypes int32    /**< number of mime types */ /**< current mime types */
+	MimeTypes []string /**< current mime types */
 }
+type cClipboardEvent C.SDL_ClipboardEvent
 
 // Sensor event structure (event.sensor.*)
 // (https://wiki.libsdl.org/SDL3/SDL_SensorEvent)
 type SensorEvent struct {
 	CommonEvent
-	Which            SensorID   /**< The instance ID of the sensor */
-	Data             [6]float32 /**< Up to 6 values from the sensor - additional values can be queried using SDL_GetSensorData() */
-	Sensor_timestamp uint64     /**< The timestamp of the sensor reading in nanoseconds, not necessarily synchronized with the system clock */
+	Which           SensorID   /**< The instance ID of the sensor */
+	Data            [6]float32 /**< Up to 6 values from the sensor - additional values can be queried using SDL_GetSensorData() */
+	SensorTimestamp uint64     /**< The timestamp of the sensor reading in nanoseconds, not necessarily synchronized with the system clock */
 }
 
 // The "quit requested" event
@@ -598,6 +616,7 @@ func (e *cEvent) cptr() *C.SDL_Event {
 	return (*C.SDL_Event)(e)
 }
 
+// TODO: Any event that has strings or arrays in it will need to be handled differently.
 func (e *cEvent) goEvent() Event {
 	t := (*CommonEvent)(unsafe.Pointer(e)).GetType()
 	switch {
@@ -614,15 +633,41 @@ func (e *cEvent) goEvent() Event {
 	case t == EVENT_KEY_DOWN || t == EVENT_KEY_UP:
 		return (*KeyboardEvent)(unsafe.Pointer(e))
 	case t == EVENT_TEXT_EDITING:
-		return (*TextEditingEvent)(unsafe.Pointer(e))
+		// TODO: has string in struct, need tested
+		cEvt := (*cTextEditingEvent)(unsafe.Pointer(e))
+		evt := new(TextEditingEvent)
+		evt.CommonEvent = *(*CommonEvent)(unsafe.Pointer(e))
+		evt.WindowID = WindowID(cEvt.windowID)
+		evt.Text = C.GoString(cEvt.text)
+		evt.Start = int32(cEvt.start)
+		evt.Length = int32(cEvt.length)
+		return evt
 	case t == EVENT_TEXT_INPUT:
-		return (*TextInputEvent)(unsafe.Pointer(e))
+		// TODO: has string in struct, need tested
+		cEvt := (*cTextInputEvent)(unsafe.Pointer(e))
+		evt := new(TextInputEvent)
+		evt.CommonEvent = *(*CommonEvent)(unsafe.Pointer(e))
+		evt.WindowID = WindowID(cEvt.windowID)
+		evt.Text = C.GoString(cEvt.text)
+		return evt
 	case t == EVENT_KEYMAP_CHANGED:
 		return (*KeymapChangedEvent)(unsafe.Pointer(e))
 	case t == EVENT_KEYBOARD_ADDED || t == EVENT_KEYBOARD_REMOVED:
 		return (*KeyboardDeviceEvent)(unsafe.Pointer(e))
 	case t == EVENT_TEXT_EDITING_CANDIDATES:
-		return (*TextEditingCandidatesEvent)(unsafe.Pointer(e))
+		// TODO: has an array of strings in struct, need tested
+		cEvt := (*cTextEditingCandidatesEvent)(unsafe.Pointer(e))
+		evt := new(TextEditingCandidatesEvent)
+		evt.CommonEvent = *(*CommonEvent)(unsafe.Pointer(e))
+		evt.WindowID = WindowID(cEvt.windowID)
+		cSlice := unsafe.Slice(cEvt.candidates, cEvt.num_candidates)
+		evt.Candidates = make([]string, len(cSlice))
+		for i, c := range cSlice {
+			evt.Candidates[i] = C.GoString(c)
+		}
+		evt.SelectedCandidate = int32(cEvt.selected_candidate)
+		evt.Horizontal = bool(cEvt.horizontal)
+		return evt
 	case t == EVENT_MOUSE_MOTION:
 		return (*MouseMotionEvent)(unsafe.Pointer(e))
 	case t == EVENT_MOUSE_BUTTON_DOWN || t == EVENT_MOUSE_BUTTON_UP:
@@ -657,22 +702,45 @@ func (e *cEvent) goEvent() Event {
 	case t == EVENT_FINGER_DOWN || t == EVENT_FINGER_UP || t == EVENT_FINGER_MOTION:
 		return (*TouchFingerEvent)(unsafe.Pointer(e))
 	case t == EVENT_CLIPBOARD_UPDATE:
-		return (*ClipboardEvent)(unsafe.Pointer(e))
+		// TODO: has an array of strings in struct, need tested
+		cEvt := (*cClipboardEvent)(unsafe.Pointer(e))
+		evt := new(ClipboardEvent)
+		evt.CommonEvent = *(*CommonEvent)(unsafe.Pointer(e))
+		evt.Owner = bool(cEvt.owner)
+		cSlice := unsafe.Slice(cEvt.mime_types, cEvt.num_mime_types)
+		evt.MimeTypes = make([]string, len(cSlice))
+		for i, c := range cSlice {
+			evt.MimeTypes[i] = C.GoString(c)
+		}
+		return evt
 	case t >= EVENT_DROP_FILE && t <= EVENT_DROP_POSITION:
-		return (*DropEvent)(unsafe.Pointer(e))
+		// TODO: has strings in struct, need tested
+		cEvt := (*cDropEvent)(unsafe.Pointer(e))
+		evt := new(DropEvent)
+		evt.CommonEvent = *(*CommonEvent)(unsafe.Pointer(e))
+		evt.WindowID = WindowID(cEvt.windowID)
+		evt.X = float32(cEvt.x)
+		evt.Y = float32(cEvt.y)
+		evt.Source = C.GoString(cEvt.source)
+		evt.Data = C.GoString(cEvt.data)
+		return evt
 	case t >= EVENT_AUDIO_DEVICE_ADDED && t <= EVENT_AUDIO_DEVICE_FORMAT_CHANGED:
 		return (*AudioDeviceEvent)(unsafe.Pointer(e))
 	case t == EVENT_SENSOR_UPDATE:
 		return (*SensorEvent)(unsafe.Pointer(e))
+	case t == EVENT_PEN_PROXIMITY_IN || t == EVENT_PEN_PROXIMITY_OUT:
+		return (*PenProximityEvent)(unsafe.Pointer(e))
 	case t == EVENT_PEN_DOWN || t == EVENT_PEN_UP:
-		return (*PenTipEvent)(unsafe.Pointer(e))
+		return (*PenTouchEvent)(unsafe.Pointer(e))
+	case t == EVENT_PEN_BUTTON_DOWN || t == EVENT_PEN_BUTTON_UP:
+		return (*PenButtonEvent)(unsafe.Pointer(e))
 	case t == EVENT_PEN_MOTION:
 		return (*PenMotionEvent)(unsafe.Pointer(e))
-	case t == EVENT_PEN_DOWN || t == EVENT_PEN_UP:
-		return (*PenButtonEvent)(unsafe.Pointer(e))
+	case t == EVENT_PEN_AXIS:
+		return (*PenAxisEvent)(unsafe.Pointer(e))
 	case t >= EVENT_CAMERA_DEVICE_ADDED && t <= EVENT_CAMERA_DEVICE_DENIED:
 		return (*CameraDeviceEvent)(unsafe.Pointer(e))
-	case t == EVENT_RENDER_TARGETS_RESET || t == EVENT_RENDER_DEVICE_RESET:
+	case t == EVENT_RENDER_TARGETS_RESET || t == EVENT_RENDER_DEVICE_RESET || t == EVENT_RENDER_DEVICE_LOST:
 		return (*RenderEvent)(unsafe.Pointer(e))
 	case t >= EVENT_USER && t <= EVENT_LAST:
 		return (*UserEvent)(unsafe.Pointer(e))
@@ -724,13 +792,13 @@ func PeepEvents(events []Event, action EventAction, minType EventType, maxType E
 // Check for the existence of a certain event type in the event queue.
 // (https://wiki.libsdl.org/SDL3/SDL_HasEvent)
 func HasEvent(evtType EventType) bool {
-	return C.SDL_HasEvent(evtType.c()) != 0
+	return bool(C.SDL_HasEvent(evtType.c()))
 }
 
 // Check for the existence of certain event types in the event queue.
 // (https://wiki.libsdl.org/SDL3/SDL_HasEvents)
 func HasEvents(minType EventType, maxType EventType) bool {
-	return C.SDL_HasEvents(minType.c(), maxType.c()) != 0
+	return bool(C.SDL_HasEvents(minType.c(), maxType.c()))
 }
 
 // Clear events of a specific type from the event queue.
@@ -749,7 +817,7 @@ func FlushEvents(minType EventType, maxType EventType) {
 // (https://wiki.libsdl.org/SDL3/SDL_PollEvent)
 func PollEvent() Event {
 	var e cEvent
-	if C.SDL_PollEvent(e.cptr()) == 0 {
+	if !C.SDL_PollEvent(e.cptr()) {
 		return nil
 	}
 	return e.goEvent()
@@ -759,7 +827,7 @@ func PollEvent() Event {
 // (https://wiki.libsdl.org/SDL3/SDL_WaitEvent)
 func WaitEvent() (Event, error) {
 	var e cEvent
-	if C.SDL_WaitEvent(e.cptr()) == 0 {
+	if !C.SDL_WaitEvent(e.cptr()) {
 		return nil, GetError()
 	}
 	return e.goEvent(), nil
@@ -770,7 +838,7 @@ func WaitEvent() (Event, error) {
 // (https://wiki.libsdl.org/SDL3/SDL_WaitEventTimeout)
 func WaitEventTimeout(timeout int32) Event {
 	var e cEvent
-	if C.SDL_WaitEventTimeout(e.cptr(), C.Sint32(timeout)) == 0 {
+	if !C.SDL_WaitEventTimeout(e.cptr(), C.Sint32(timeout)) {
 		return nil
 	}
 	return e.goEvent()
@@ -780,10 +848,10 @@ func WaitEventTimeout(timeout int32) Event {
 // (https://wiki.libsdl.org/SDL3/SDL_PushEvent)
 func PushEvent(evt Event) (filtered bool, err error) {
 	ret := C.SDL_PushEvent(evt.cptr())
-	if ret < 0 {
+	if !ret {
 		return false, GetError()
 	}
-	return ret == 0, nil
+	return bool(ret), nil
 }
 
 // A function pointer used for callbacks that watch the event queue.
@@ -793,12 +861,14 @@ type EventFilter func(event Event, userdata any) bool
 var eventFilter EventFilter
 var eventFilterUserdata any
 
+// TODO: test me
+//
 //export goEventFilter
-func goEventFilter(event *C.SDL_Event) C.int {
+func goEventFilter(event *C.SDL_Event) C.bool {
 	if eventFilter == nil {
-		return 1 // Permit event
+		return (C.bool)(true) // Permit event
 	}
-	return sdlBool(eventFilter((*cEvent)(event).goEvent(), eventFilterUserdata))
+	return (C.bool)(eventFilter((*cEvent)(event).goEvent(), eventFilterUserdata))
 }
 
 // Set up a filter to process all events before they change internal state and
@@ -816,7 +886,7 @@ func GetEventFilter() (filter EventFilter, userdata any) {
 	var cFilter C.SDL_EventFilter
 	var cUserdata unsafe.Pointer
 	ret := C.SDL_GetEventFilter(&cFilter, &cUserdata)
-	if ret == C.SDL_FALSE {
+	if !ret {
 		eventFilter = nil
 		eventFilterUserdata = nil
 	} else if cFilter != C.SDL_EventFilter(C.cgoEventFilter) {
@@ -834,14 +904,16 @@ type eventWatcher struct {
 var eventWatcherCount uintptr = 0
 var eventWatchers = make(map[uintptr]eventWatcher)
 
+// TODO: test me
+//
 //export goEventWatcher
-func goEventWatcher(userdata unsafe.Pointer, event *C.SDL_Event) (_ C.int) {
+func goEventWatcher(userdata unsafe.Pointer, event *C.SDL_Event) C.bool {
 	watcher, ok := eventWatchers[uintptr(userdata)]
 	if !ok {
 		fmt.Printf("eventWatcher not found: %v\n", uintptr(userdata))
-		return
+		return (C.bool)(true) // Permit event
 	}
-	return sdlBool(watcher.filter((*cEvent)(event).goEvent(), watcher.userdata))
+	return (C.bool)(watcher.filter((*cEvent)(event).goEvent(), watcher.userdata))
 }
 
 // Add a callback to be triggered when an event is added to the event queue.
@@ -849,7 +921,7 @@ func goEventWatcher(userdata unsafe.Pointer, event *C.SDL_Event) (_ C.int) {
 func AddEventWatch(filter EventFilter, userdata any) error {
 	watcher := eventWatcher{filter, userdata}
 	ret := C.SDL_AddEventWatch(C.SDL_EventFilter(C.cgoEventWatcher), unsafe.Pointer(eventWatcherCount))
-	if ret != 0 {
+	if !ret {
 		return GetError()
 	}
 	eventWatchers[eventWatcherCount] = watcher
@@ -873,7 +945,7 @@ func DelEventWatch(filter EventFilter, userdata any) {
 		fmt.Printf("DelEventWatch: eventWatcher not found: %v\n", idx)
 		return
 	}
-	C.SDL_DelEventWatch(C.SDL_EventFilter(C.cgoEventWatcher), unsafe.Pointer(eventWatcherCount))
+	C.SDL_RemoveEventWatch(C.SDL_EventFilter(C.cgoEventWatcher), unsafe.Pointer(eventWatcherCount))
 	delete(eventWatchers, idx)
 }
 
@@ -881,11 +953,11 @@ var eventFilterOnce EventFilter
 var eventFilterOnceUserdata any
 
 //export goEventFilterOnce
-func goEventFilterOnce(event *C.SDL_Event) C.int {
+func goEventFilterOnce(event *C.SDL_Event) C.bool {
 	if eventFilterOnce == nil {
-		return 1 // Permit event
+		return (C.bool)(true) // Permit event
 	}
-	return sdlBool(eventFilterOnce((*cEvent)(event).goEvent(), eventFilterOnceUserdata))
+	return (C.bool)(eventFilterOnce((*cEvent)(event).goEvent(), eventFilterOnceUserdata))
 }
 
 // Run a specific filter function on the current event queue, removing any
@@ -902,13 +974,13 @@ func FilterEvents(filter EventFilter, userdata any) {
 // Set the state of processing events by type.
 // (https://wiki.libsdl.org/SDL3/SDL_SetEventEnabled)
 func SetEventEnabled(evtType EventType, enabled bool) {
-	C.SDL_SetEventEnabled(evtType.c(), sdlBool(enabled))
+	C.SDL_SetEventEnabled(evtType.c(), (C.bool)(enabled))
 }
 
 // Query the state of processing events by type.
 // (https://wiki.libsdl.org/SDL3/SDL_EventEnabled)
 func EventEnabled(evtType EventType) bool {
-	return C.SDL_EventEnabled(evtType.c()) == C.SDL_TRUE
+	return bool(C.SDL_EventEnabled(evtType.c()))
 }
 
 // Allocate a set of user-defined events, and return the beginning event

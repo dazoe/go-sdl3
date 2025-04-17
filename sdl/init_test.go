@@ -5,7 +5,7 @@ import "testing"
 func TestInitQuit(t *testing.T) {
 	// INIT_CAMERA skipped
 	subs := []InitFlags{INIT_AUDIO, INIT_EVENTS, INIT_GAMEPAD, INIT_HAPTIC,
-		INIT_JOYSTICK, INIT_SENSOR, INIT_TIMER, INIT_VIDEO}
+		INIT_JOYSTICK, INIT_SENSOR, INIT_VIDEO}
 	var allSubs InitFlags
 	for _, s := range subs {
 		allSubs |= s

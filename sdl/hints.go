@@ -15,7 +15,7 @@ func SetHint(name, value string) error {
 	defer C.free(unsafe.Pointer(cName))
 	defer C.free(unsafe.Pointer(cValue))
 	ret := C.SDL_SetHint(cName, cValue)
-	if ret != 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil

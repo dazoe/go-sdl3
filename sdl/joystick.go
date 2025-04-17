@@ -39,6 +39,7 @@ const (
 	JOYSTICK_TYPE_DRUM_KIT     = JoystickType(C.SDL_JOYSTICK_TYPE_DRUM_KIT)
 	JOYSTICK_TYPE_ARCADE_PAD   = JoystickType(C.SDL_JOYSTICK_TYPE_ARCADE_PAD)
 	JOYSTICK_TYPE_THROTTLE     = JoystickType(C.SDL_JOYSTICK_TYPE_THROTTLE)
+	JOYSTICK_TYPE_COUNT        = JoystickType(C.SDL_JOYSTICK_TYPE_COUNT)
 )
 
 // Possible connection states for a joystick device.
@@ -81,7 +82,7 @@ func UnlockJoysticks() {
 // Return whether a joystick is currently connected.
 // (https://wiki.libsdl.org/SDL3/SDL_HasJoystick)
 func HasJoystick() bool {
-	return C.SDL_HasJoystick() != 0
+	return bool(C.SDL_HasJoystick())
 }
 
 // Get a list of currently connected joysticks.
@@ -102,25 +103,25 @@ func GetJoysticks() ([]JoystickID, error) {
 // Get the implementation dependent name of a joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickNameForID)
 func (instance_id JoystickID) GetName() (name string, err error) {
-	name = C.GoString(C.SDL_GetJoystickNameForID(C.SDL_JoystickID(instance_id)))
-	if len(name) == 0 {
-		err = GetError()
+	ret := C.SDL_GetJoystickNameForID(C.SDL_JoystickID(instance_id))
+	if ret == nil {
+		return "", GetError()
 	}
-	return
+	return C.GoString(ret), nil
 }
 
 // Get the implementation dependent path of a joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickPathForID)
 func (instance_id JoystickID) GetPath() (path string, err error) {
-	path = C.GoString(C.SDL_GetJoystickPathForID(C.SDL_JoystickID(instance_id)))
-	if len(path) == 0 {
-		err = GetError()
+	ret := C.SDL_GetJoystickPathForID(C.SDL_JoystickID(instance_id))
+	if ret == nil {
+		return "", GetError()
 	}
-	return
+	return C.GoString(ret), nil
 }
 
 // Get the player index of a joystick.
-// (https://wiki.libsdl.org/SDL3/GetJoystickPlayerIndexForID)
+// (https://wiki.libsdl.org/SDL3/SDL_GetJoystickPlayerIndexForID)
 func (instance_id JoystickID) GetPlayerIndex() int32 {
 	return int32(C.SDL_GetJoystickPlayerIndexForID(C.SDL_JoystickID(instance_id)))
 }
@@ -164,6 +165,9 @@ func OpenJoystick(instance_id JoystickID) (joystick *Joystick, err error) {
 	}
 	return
 }
+func (instance_id JoystickID) Open() (joystick *Joystick, err error) {
+	return OpenJoystick(instance_id)
+}
 
 // Get the SDL_Joystick associated with an instance ID, if it has been opened.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickFromID)
@@ -188,7 +192,7 @@ func GetJoystickFromPlayerIndex(player_index int32) (joystick *Joystick, err err
 // The structure that describes a virtual joystick touchpad.
 // (https://wiki.libsdl.org/SDL3/SDL_VirtualJoystickTouchpadDesc)
 type VirtualJoystickTouchpadDesc struct {
-	Nfingers uint16    /**< the number of simultaneous fingers on this touchpad */
+	NFingers uint16    /**< the number of simultaneous fingers on this touchpad */
 	_        [3]uint16 // padding
 }
 
@@ -196,7 +200,7 @@ type VirtualJoystickTouchpadDesc struct {
 // (https://wiki.libsdl.org/SDL3/SDL_VirtualJoystickSensorDesc)
 type VirtualJoystickSensorDesc struct {
 	Type SensorType /**< the type of this sensor */
-	rate float32    /**< the update frequency of this sensor, may be 0.0f */
+	Rate float32    /**< the update frequency of this sensor, may be 0.0f */
 }
 
 // The structure that describes a virtual joystick.
@@ -222,7 +226,7 @@ func AttachVirtualJoystick(desc *VirtualJoystickDesc) (id JoystickID, err error)
 // (https://wiki.libsdl.org/SDL3/SDL_DetachVirtualJoystick)
 func DetachVirtualJoystick(instance_id JoystickID) (err error) {
 	ret := C.SDL_DetachVirtualJoystick(C.SDL_JoystickID(instance_id))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -231,14 +235,14 @@ func DetachVirtualJoystick(instance_id JoystickID) (err error) {
 // Query whether or not a joystick is virtual.
 // (https://wiki.libsdl.org/SDL3/SDL_IsJoystickVirtual)
 func IsJoystickVirtual(instance_id JoystickID) bool {
-	return C.SDL_IsJoystickVirtual(C.SDL_JoystickID(instance_id)) != 0
+	return bool(C.SDL_IsJoystickVirtual(C.SDL_JoystickID(instance_id)))
 }
 
 // Set the state of an axis on an opened virtual joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickVirtualAxis)
 func (joystick *Joystick) SetVirtualAxis(axis int, value int16) (err error) {
 	ret := C.SDL_SetJoystickVirtualAxis(joystick.cptr(), C.int(axis), C.Sint16(value))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -248,7 +252,7 @@ func (joystick *Joystick) SetVirtualAxis(axis int, value int16) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickVirtualBall)
 func (joystick *Joystick) SetVirtualBall(ball int, xrel int16, yrel int16) (err error) {
 	ret := C.SDL_SetJoystickVirtualBall(joystick.cptr(), C.int(ball), C.Sint16(xrel), C.Sint16(yrel))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -256,9 +260,9 @@ func (joystick *Joystick) SetVirtualBall(ball int, xrel int16, yrel int16) (err 
 
 // Set the state of a button on an opened virtual joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickVirtualButton)
-func (joystick *Joystick) SetVirtualButton(button int, value uint8) (err error) {
-	ret := C.SDL_SetJoystickVirtualButton(joystick.cptr(), C.int(button), C.Uint8(value))
-	if ret != 0 {
+func (joystick *Joystick) SetVirtualButton(button int, down bool) (err error) {
+	ret := C.SDL_SetJoystickVirtualButton(joystick.cptr(), C.int(button), (C.bool)(down))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -268,7 +272,7 @@ func (joystick *Joystick) SetVirtualButton(button int, value uint8) (err error) 
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickVirtualHat)
 func (joystick *Joystick) SetVirtualHat(hat int, value uint8) (err error) {
 	ret := C.SDL_SetJoystickVirtualHat(joystick.cptr(), C.int(hat), C.Uint8(value))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -276,9 +280,9 @@ func (joystick *Joystick) SetVirtualHat(hat int, value uint8) (err error) {
 
 // Set touchpad finger state on an opened virtual joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickVirtualTouchpad)
-func (joystick *Joystick) SetVirtualTouchpad(touchpad int, finger int, state uint8, x float32, y float32, pressure float32) (err error) {
-	ret := C.SDL_SetJoystickVirtualTouchpad(joystick.cptr(), C.int(touchpad), C.int(finger), C.Uint8(state), C.float(x), C.float(y), C.float(pressure))
-	if ret != 0 {
+func (joystick *Joystick) SetVirtualTouchpad(touchpad int, finger int, state bool, x float32, y float32, pressure float32) (err error) {
+	ret := C.SDL_SetJoystickVirtualTouchpad(joystick.cptr(), C.int(touchpad), C.int(finger), (C.bool)(state), C.float(x), C.float(y), C.float(pressure))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -289,7 +293,7 @@ func (joystick *Joystick) SetVirtualTouchpad(touchpad int, finger int, state uin
 func (joystick *Joystick) SendVirtualSensorData(_type SensorType, sensor_timestamp uint64, data []float32) (err error) {
 	dataPtr := unsafe.SliceData(data)
 	ret := C.SDL_SendJoystickVirtualSensorData(joystick.cptr(), C.SDL_SensorType(_type), C.Uint64(sensor_timestamp), (*C.float)(dataPtr), C.int(len(data)))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -316,21 +320,21 @@ const (
 // Get the implementation dependent name of a joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickName)
 func (joystick *Joystick) GetName() (name string, err error) {
-	name = C.GoString(C.SDL_GetJoystickName(joystick.cptr()))
-	if len(name) == 0 {
-		err = GetError()
+	ret := C.SDL_GetJoystickName(joystick.cptr())
+	if ret == nil {
+		return "", GetError()
 	}
-	return
+	return C.GoString(ret), err
 }
 
 // Get the implementation dependent path of a joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickPath)
 func (joystick *Joystick) GetPath() (path string, err error) {
-	path = C.GoString(C.SDL_GetJoystickPath(joystick.cptr()))
-	if len(path) == 0 {
-		err = GetError()
+	ret := C.SDL_GetJoystickPath(joystick.cptr())
+	if ret == nil {
+		return "", GetError()
 	}
-	return
+	return C.GoString(ret), err
 }
 
 // Get the player index of an opened joystick.
@@ -343,7 +347,7 @@ func (joystick *Joystick) GetPlayerIndex() int32 {
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickPlayerIndex)
 func (joystick *Joystick) SetPlayerIndex(player_index int32) (err error) {
 	ret := C.SDL_SetJoystickPlayerIndex(joystick.cptr(), C.int(player_index))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -405,7 +409,7 @@ func GetJoystickGUIDInfo(guid GUID) (vendor uint16, product uint16, version uint
 // Get the status of a specified joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_JoystickConnected)
 func (joystick *Joystick) JoystickConnected() (connected bool, err error) {
-	connected = C.SDL_JoystickConnected(joystick.cptr()) != 0
+	connected = bool(C.SDL_JoystickConnected(joystick.cptr()))
 	if !connected {
 		err = GetError()
 	}
@@ -465,13 +469,13 @@ func (joystick *Joystick) GetNumButtons() (num int, err error) {
 // Set the state of joystick event processing.
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickEventsEnabled)
 func SetJoystickEventsEnabled(enabled bool) {
-	C.SDL_SetJoystickEventsEnabled(sdlBool(enabled))
+	C.SDL_SetJoystickEventsEnabled((C.bool)(enabled))
 }
 
 // Query the state of joystick event processing.
 // (https://wiki.libsdl.org/SDL3/SDL_JoystickEventsEnabled)
 func JoystickEventsEnabled() bool {
-	return C.SDL_JoystickEventsEnabled() != 0
+	return bool(C.SDL_JoystickEventsEnabled())
 }
 
 // Update the current state of the open joysticks.
@@ -482,6 +486,10 @@ func UpdateJoysticks() {
 
 // Get the current state of an axis control on a joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickAxis)
+// TODO: this is a bad api design. returns 0 for an error but 0 is a valid value also.
+//
+//	for many joysticks 0 will be the resting value also so many usless calls to
+//	GetError when there will likely never be an error. Maybe I should change this?
 func (joystick *Joystick) GetAxis(axis int32) (value int16, err error) {
 	value = int16(C.SDL_GetJoystickAxis(joystick.cptr(), C.int(axis)))
 	if value == 0 {
@@ -493,7 +501,7 @@ func (joystick *Joystick) GetAxis(axis int32) (value int16, err error) {
 // Get the initial state of an axis control on a joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickAxisInitialState)
 func (joystick *Joystick) GetAxisInitialState(axis int32) (state int16, ok bool) {
-	ok = C.SDL_GetJoystickAxisInitialState(joystick.cptr(), C.int(axis), (*C.Sint16)(&state)) != 0
+	ok = bool(C.SDL_GetJoystickAxisInitialState(joystick.cptr(), C.int(axis), (*C.Sint16)(&state)))
 	return
 }
 
@@ -501,7 +509,7 @@ func (joystick *Joystick) GetAxisInitialState(axis int32) (state int16, ok bool)
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickBall)
 func (joystick *Joystick) GetBall(ball int32) (dx, dy int32, err error) {
 	ret := C.SDL_GetJoystickBall(joystick.cptr(), C.int(ball), (*C.int)(&dx), (*C.int)(&dy))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -529,21 +537,21 @@ const (
 
 // Get the current state of a button on a joystick.
 // (https://wiki.libsdl.org/SDL3/SDL_GetJoystickButton)
-func (joystick *Joystick) GetButton(button int32) uint8 {
-	return uint8(C.SDL_GetJoystickButton(joystick.cptr(), C.int(button)))
+func (joystick *Joystick) GetButton(button int32) bool {
+	return bool(C.SDL_GetJoystickButton(joystick.cptr(), C.int(button)))
 }
 
 // Start a rumble effect.
 // (https://wiki.libsdl.org/SDL3/SDL_RumbleJoystick)
-func (joystick *Joystick) Rumble(low_frequency_rumble, high_frequency_rumble uint16, duration_ms uint32) int32 {
-	return int32(C.SDL_RumbleJoystick(joystick.cptr(), C.Uint16(low_frequency_rumble), C.Uint16(high_frequency_rumble), C.Uint32(duration_ms)))
+func (joystick *Joystick) Rumble(low_frequency_rumble, high_frequency_rumble uint16, duration_ms uint32) bool {
+	return bool(C.SDL_RumbleJoystick(joystick.cptr(), C.Uint16(low_frequency_rumble), C.Uint16(high_frequency_rumble), C.Uint32(duration_ms)))
 }
 
 // Start a rumble effect in the joystick's triggers.
 // (https://wiki.libsdl.org/SDL3/SDL_RumbleJoystickTriggers)
 func (joystick *Joystick) RumbleTriggers(left_rumble, right_rumble uint16, duration_ms uint32) (err error) {
 	ret := C.SDL_RumbleJoystickTriggers(joystick.cptr(), C.Uint16(left_rumble), C.Uint16(right_rumble), C.Uint32(duration_ms))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -553,7 +561,7 @@ func (joystick *Joystick) RumbleTriggers(left_rumble, right_rumble uint16, durat
 // (https://wiki.libsdl.org/SDL3/SDL_SetJoystickLED)
 func (joystick *Joystick) SetLED(red uint8, green uint8, blue uint8) (err error) {
 	ret := C.SDL_SetJoystickLED(joystick.cptr(), C.Uint8(red), C.Uint8(green), C.Uint8(blue))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -563,7 +571,7 @@ func (joystick *Joystick) SetLED(red uint8, green uint8, blue uint8) (err error)
 // (https://wiki.libsdl.org/SDL3/SDL_SendJoystickEffect)
 func (joystick *Joystick) SendEffect(data []byte) (err error) {
 	ret := C.SDL_SendJoystickEffect(joystick.cptr(), unsafe.Pointer(unsafe.SliceData(data)), C.int(len(data)))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return

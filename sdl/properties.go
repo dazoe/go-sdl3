@@ -54,19 +54,19 @@ func CreateProperties() (PropertiesID, error) {
 
 // Copy a group of properties.
 // (https://wiki.libsdl.org/SDL3/SDL_CopyProperties)
-func (pid PropertiesID) Copy(dst PropertiesID) (PropertiesID, error) {
-	ret := PropertiesID(C.SDL_CopyProperties(pid.c(), dst.c()))
-	if ret < 0 {
-		return 0, GetError()
+func (pid PropertiesID) Copy(dst PropertiesID) error {
+	ret := C.SDL_CopyProperties(pid.c(), dst.c())
+	if !ret {
+		return GetError()
 	}
-	return PropertiesID(ret), nil
+	return nil
 }
 
 // Lock a group of properties.
 // (https://wiki.libsdl.org/SDL3/SDL_LockProperties)
 func (pid PropertiesID) Lock() error {
 	ret := C.SDL_LockProperties(pid.c())
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -95,7 +95,7 @@ func (pid PropertiesID) SetPointerWithCleanup(name string, value unsafe.Pointer,
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	ret := C.SDL_SetPointerPropertyWithCleanup(pid.c(), cname, value, C.SDL_CleanupPropertyCallback(C.cgoCleanupPropertyCallback), unsafe.Pointer(&cleanup))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -107,7 +107,7 @@ func (pid PropertiesID) SetPointer(name string, value unsafe.Pointer) error {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	ret := C.SDL_SetPointerProperty(pid.c(), cname, value)
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -121,7 +121,7 @@ func (pid PropertiesID) SetString(name string, value string) error {
 	cvalue := C.CString(value)
 	defer C.free(unsafe.Pointer(cvalue))
 	ret := C.SDL_SetStringProperty(pid.c(), cname, cvalue)
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -133,7 +133,7 @@ func (pid PropertiesID) SetNumber(name string, value int64) error {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	ret := C.SDL_SetNumberProperty(pid.c(), cname, C.Sint64(value))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -145,7 +145,7 @@ func (pid PropertiesID) SetFloat(name string, value float32) error {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	ret := C.SDL_SetFloatProperty(pid.c(), cname, C.float(value))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -156,8 +156,8 @@ func (pid PropertiesID) SetFloat(name string, value float32) error {
 func (pid PropertiesID) SetBoolean(name string, value bool) error {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
-	ret := C.SDL_SetBooleanProperty(pid.c(), cname, sdlBool(value))
-	if ret < 0 {
+	ret := C.SDL_SetBooleanProperty(pid.c(), cname, (C.bool)(value))
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -169,7 +169,7 @@ func (pid PropertiesID) Has(name string) bool {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	ret := C.SDL_HasProperty(pid.c(), cname)
-	return ret != 0
+	return bool(ret)
 }
 
 // Get the type of a property in a group of properties.
@@ -220,7 +220,7 @@ func (pid PropertiesID) GetFloat(name string, defaultValue float32) float32 {
 func (pid PropertiesID) GetBoolean(name string, defaultValue bool) bool {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
-	return C.SDL_GetBooleanProperty(pid.c(), cname, sdlBool(defaultValue)) != 0
+	return bool(C.SDL_GetBooleanProperty(pid.c(), cname, (C.bool)(defaultValue)))
 }
 
 // Clear a property from a group of properties.
@@ -229,7 +229,7 @@ func (pid PropertiesID) Clear(name string) error {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	ret := C.SDL_ClearProperty(pid.c(), cname)
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -249,7 +249,7 @@ func goEnumeratePropertiesCallback(userdata unsafe.Pointer, props PropertiesID, 
 // (https://wiki.libsdl.org/SDL3/SDL_EnumerateProperties)
 func (pid PropertiesID) Enumerate(callback EnumeratePropertiesCallback) error {
 	ret := C.SDL_EnumerateProperties(pid.c(), C.SDL_EnumeratePropertiesCallback(C.cgoEnumeratePropertiesCallback), unsafe.Pointer(&callback))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil

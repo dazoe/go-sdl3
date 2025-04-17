@@ -32,7 +32,6 @@ func (mode *ScaleMode) cptr() *C.SDL_ScaleMode {
 const (
 	SCALEMODE_NEAREST = ScaleMode(C.SDL_SCALEMODE_NEAREST) /**< nearest pixel sampling */
 	SCALEMODE_LINEAR  = ScaleMode(C.SDL_SCALEMODE_LINEAR)  /**< linear filtering */
-	SCALEMODE_BEST    = ScaleMode(C.SDL_SCALEMODE_BEST)    /**< anisotropic filtering */
 )
 
 // The flip mode.
@@ -49,8 +48,9 @@ const (
 	FLIP_VERTICAL   = FlipMode(C.SDL_FLIP_VERTICAL)   /**< flip vertically */
 )
 
-// Internal surface data
-type SurfaceData C.SDL_SurfaceData
+//TODO: removed
+// // Internal surface data
+// type SurfaceData C.SDL_SurfaceData
 
 // A collection of pixels used in software blitting.
 // (https://wiki.libsdl.org/SDL3/SDL_Surface)
@@ -63,7 +63,7 @@ type Surface struct {
 
 	refcount C.int /**< Application reference count, used when freeing surface */
 
-	internal *C.SDL_SurfaceData /**< Private */
+	internal unsafe.Pointer /**< Private */
 }
 
 func (surface *Surface) cptr() *C.SDL_Surface {
@@ -119,7 +119,7 @@ const (
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfaceColorspace)
 func (surface *Surface) SetColorspace(colorspace Colorspace) (err error) {
 	ret := C.SDL_SetSurfaceColorspace(surface.cptr(), C.SDL_Colorspace(colorspace))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -145,7 +145,7 @@ func (surface *Surface) CreatePalette() (palette *Palette, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfacePalette)
 func (surface *Surface) SetPalette(palette *Palette) (err error) {
 	ret := C.SDL_SetSurfacePalette(surface.cptr(), palette.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -161,7 +161,7 @@ func (surface *Surface) GetPalette() *Palette {
 // (https://wiki.libsdl.org/SDL3/SDL_LockSurface)
 func (surface *Surface) Lock() (err error) {
 	ret := C.SDL_LockSurface(surface.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -176,7 +176,7 @@ func (surface *Surface) Unlock() {
 // Load a BMP image from a seekable SDL data stream.
 // (https://wiki.libsdl.org/SDL3/SDL_LoadBMP_IO)
 func (src *IOStream) LoadBMP(closeio bool) (surface *Surface, err error) {
-	surface = (*Surface)(unsafe.Pointer(C.SDL_LoadBMP_IO(src.cptr(), sdlBool(closeio))))
+	surface = (*Surface)(unsafe.Pointer(C.SDL_LoadBMP_IO(src.cptr(), (C.bool)(closeio))))
 	if surface == nil {
 		err = GetError()
 	}
@@ -196,8 +196,8 @@ func LoadBMP(file string) (surface *Surface, err error) {
 // Save a surface to a seekable SDL data stream in BMP format.
 // (https://wiki.libsdl.org/SDL3/SDL_SaveBMP_IO)
 func (surface *Surface) SaveBMP_IO(dst *IOStream, closeio bool) (err error) {
-	ret := C.SDL_SaveBMP_IO(surface.cptr(), dst.cptr(), sdlBool(closeio))
-	if ret != 0 {
+	ret := C.SDL_SaveBMP_IO(surface.cptr(), dst.cptr(), (C.bool)(closeio))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -207,7 +207,7 @@ func (surface *Surface) SaveBMP_IO(dst *IOStream, closeio bool) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SaveBMP)
 func (surface *Surface) SaveBMP(file string) (err error) {
 	ret := C.SDL_SaveBMP(surface.cptr(), C.CString(file))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -216,8 +216,8 @@ func (surface *Surface) SaveBMP(file string) (err error) {
 // Set the RLE acceleration hint for a surface.
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfaceRLE)
 func (surface *Surface) SetRLE(enabled bool) (err error) {
-	ret := C.SDL_SetSurfaceRLE(surface.cptr(), sdlBool(enabled))
-	if ret != 0 {
+	ret := C.SDL_SetSurfaceRLE(surface.cptr(), (C.bool)(enabled))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -226,14 +226,14 @@ func (surface *Surface) SetRLE(enabled bool) (err error) {
 // Returns whether the surface is RLE enabled.
 // (https://wiki.libsdl.org/SDL3/SDL_SurfaceHasRLE)
 func (surface *Surface) HasRLE() bool {
-	return C.SDL_SurfaceHasRLE(surface.cptr()) != 0
+	return bool(C.SDL_SurfaceHasRLE(surface.cptr()))
 }
 
 // Set the color key (transparent pixel) in a surface.
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfaceColorKey)
 func (surface *Surface) SetColorKey(enabled bool, key uint32) (err error) {
-	ret := C.SDL_SetSurfaceColorKey(surface.cptr(), sdlBool(enabled), C.Uint32(key))
-	if ret != 0 {
+	ret := C.SDL_SetSurfaceColorKey(surface.cptr(), (C.bool)(enabled), C.Uint32(key))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -242,14 +242,14 @@ func (surface *Surface) SetColorKey(enabled bool, key uint32) (err error) {
 // Returns whether the surface has a color key.
 // (https://wiki.libsdl.org/SDL3/SDL_SurfaceHasColorKey)
 func (surface *Surface) HasColorKey() bool {
-	return C.SDL_SurfaceHasColorKey(surface.cptr()) != 0
+	return bool(C.SDL_SurfaceHasColorKey(surface.cptr()))
 }
 
 // Get the color key (transparent pixel) for a surface.
 // (https://wiki.libsdl.org/SDL3/SDL_GetSurfaceColorKey)
 func (surface *Surface) GetColorKey() (key uint32, err error) {
 	ret := C.SDL_GetSurfaceColorKey(surface.cptr(), (*C.Uint32)(&key))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -259,7 +259,7 @@ func (surface *Surface) GetColorKey() (key uint32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfaceColorMod)
 func (surface *Surface) SetColorMod(r, g, b uint8) (err error) {
 	ret := C.SDL_SetSurfaceColorMod(surface.cptr(), C.Uint8(r), C.Uint8(g), C.Uint8(b))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -269,7 +269,7 @@ func (surface *Surface) SetColorMod(r, g, b uint8) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetSurfaceColorMod)
 func (surface *Surface) GetColorMod() (r, g, b uint8, err error) {
 	ret := C.SDL_GetSurfaceColorMod(surface.cptr(), (*C.Uint8)(&r), (*C.Uint8)(&g), (*C.Uint8)(&b))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -279,7 +279,7 @@ func (surface *Surface) GetColorMod() (r, g, b uint8, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfaceAlphaMod)
 func (surface *Surface) SetAlphaMod(alpha uint8) (err error) {
 	ret := C.SDL_SetSurfaceAlphaMod(surface.cptr(), C.Uint8(alpha))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -289,7 +289,7 @@ func (surface *Surface) SetAlphaMod(alpha uint8) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetSurfaceAlphaMod)
 func (surface *Surface) GetAlphaMod() (alpha uint8, err error) {
 	ret := C.SDL_GetSurfaceAlphaMod(surface.cptr(), (*C.Uint8)(&alpha))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -299,7 +299,7 @@ func (surface *Surface) GetAlphaMod() (alpha uint8, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfaceBlendMode)
 func (surface *Surface) SetBlendMode(blendMode BlendMode) (err error) {
 	ret := C.SDL_SetSurfaceBlendMode(surface.cptr(), C.SDL_BlendMode(blendMode))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -309,7 +309,7 @@ func (surface *Surface) SetBlendMode(blendMode BlendMode) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetSurfaceBlendMode)
 func (surface *Surface) GetBlendMode() (blendmode BlendMode, err error) {
 	ret := C.SDL_GetSurfaceBlendMode(surface.cptr(), (*C.SDL_BlendMode)(&blendmode))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -318,14 +318,14 @@ func (surface *Surface) GetBlendMode() (blendmode BlendMode, err error) {
 // Set the clipping rectangle for a surface.
 // (https://wiki.libsdl.org/SDL3/SDL_SetSurfaceClipRect)
 func (surface *Surface) SetClipRect(rect *Rect) bool {
-	return C.SDL_SetSurfaceClipRect(surface.cptr(), rect.cptr()) != 0
+	return bool(C.SDL_SetSurfaceClipRect(surface.cptr(), rect.cptr()))
 }
 
 // Get the clipping rectangle for a surface.
 // (https://wiki.libsdl.org/SDL3/SDL_GetSurfaceClipRect)
 func (surface *Surface) GetClipRect() (rect Rect, err error) {
 	ret := C.SDL_GetSurfaceClipRect(surface.cptr(), rect.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -335,7 +335,7 @@ func (surface *Surface) GetClipRect() (rect Rect, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_FlipSurface)
 func (surface *Surface) Flip(flip FlipMode) (err error) {
 	ret := C.SDL_FlipSurface(surface.cptr(), C.SDL_FlipMode(flip))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -379,7 +379,7 @@ func ConvertPixels(width, height int32, src_format PixelFormat, src unsafe.Point
 	dst_format PixelFormat, dst unsafe.Pointer, dst_pitch int32) (err error) {
 	ret := C.SDL_ConvertPixels(C.int(width), C.int(height), C.SDL_PixelFormat(src_format), src,
 		C.int(src_pitch), C.SDL_PixelFormat(dst_format), dst, C.int(dst_pitch))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -394,7 +394,7 @@ func ConvertPixelsAndColorspace(width, height int32, src_format PixelFormat, src
 	ret := C.SDL_ConvertPixelsAndColorspace(C.int(width), C.int(height), C.SDL_PixelFormat(src_format),
 		C.SDL_Colorspace(src_colorspace), C.SDL_PropertiesID(src_properties), src, C.int(src_pitch), C.SDL_PixelFormat(dst_format),
 		C.SDL_Colorspace(dst_colorspace), C.SDL_PropertiesID(dst_properties), dst, C.int(dst_pitch))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -405,8 +405,8 @@ func ConvertPixelsAndColorspace(width, height int32, src_format PixelFormat, src
 func PremultiplyAlpha(width, height int32, src_format PixelFormat, src unsafe.Pointer, src_pitch int32,
 	dst_format PixelFormat, dst unsafe.Pointer, dst_pitch int32, linear bool) (err error) {
 	ret := C.SDL_PremultiplyAlpha(C.int(width), C.int(height), C.SDL_PixelFormat(src_format), src, C.int(src_pitch),
-		C.SDL_PixelFormat(dst_format), dst, C.int(dst_pitch), sdlBool(linear))
-	if ret != 0 {
+		C.SDL_PixelFormat(dst_format), dst, C.int(dst_pitch), (C.bool)(linear))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -415,8 +415,8 @@ func PremultiplyAlpha(width, height int32, src_format PixelFormat, src unsafe.Po
 // Premultiply the alpha in a surface.
 // (https://wiki.libsdl.org/SDL3/SDL_PremultiplySurfaceAlpha)
 func (surface *Surface) PremultiplySurfaceAlpha(linera bool) (err error) {
-	ret := C.SDL_PremultiplySurfaceAlpha(surface.cptr(), sdlBool(linera))
-	if ret != 0 {
+	ret := C.SDL_PremultiplySurfaceAlpha(surface.cptr(), (C.bool)(linera))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -426,7 +426,7 @@ func (surface *Surface) PremultiplySurfaceAlpha(linera bool) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_FillSurfaceRect)
 func (surface *Surface) FillRect(rect *Rect, color uint32) (err error) {
 	ret := C.SDL_FillSurfaceRect(surface.cptr(), rect.cptr(), C.Uint32(color))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -436,7 +436,7 @@ func (surface *Surface) FillRect(rect *Rect, color uint32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_FillSurfaceRects)
 func (surface *Surface) FillRects(rects []Rect, color uint32) (err error) {
 	ret := C.SDL_FillSurfaceRects(surface.cptr(), rects[0].cptr(), C.int(len(rects)), C.Uint32(color))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -446,7 +446,7 @@ func (surface *Surface) FillRects(rects []Rect, color uint32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_BlitSurface)
 func (surface *Surface) Blit(srcRect *Rect, dst *Surface, dstRect *Rect) (err error) {
 	ret := C.SDL_BlitSurface(surface.cptr(), srcRect.cptr(), dst.cptr(), dstRect.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -456,7 +456,7 @@ func (surface *Surface) Blit(srcRect *Rect, dst *Surface, dstRect *Rect) (err er
 // (https://wiki.libsdl.org/SDL3/SDL_BlitSurfaceUnchecked)
 func (surface *Surface) BlitUnchecked(srcRect *Rect, dst *Surface, dstRect *Rect) (err error) {
 	ret := C.SDL_BlitSurfaceUnchecked(surface.cptr(), srcRect.cptr(), dst.cptr(), dstRect.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -467,7 +467,7 @@ func (surface *Surface) BlitUnchecked(srcRect *Rect, dst *Surface, dstRect *Rect
 // removed: https://github.com/libsdl-org/SDL/commit/12e50d17a2c1f3f906698b797beeddb9d7af5613
 // func (surface *Surface) SoftStretch(srcRect *Rect, dst *Surface, dstRect *Rect, scaleMode ScaleMode) (err error) {
 // 	ret := C.SDL_SoftStretch(surface.cptr(), srcRect.cptr(), dst.cptr(), dstRect.cptr(), C.SDL_ScaleMode(scaleMode))
-// 	if ret != 0 {
+// 	if !ret {
 // 		err = GetError()
 // 	}
 // 	return
@@ -478,7 +478,7 @@ func (surface *Surface) BlitUnchecked(srcRect *Rect, dst *Surface, dstRect *Rect
 // (https://wiki.libsdl.org/SDL3/SDL_BlitSurfaceScaled)
 func (surface *Surface) BlitScaled(srcRect *Rect, dst *Surface, dstRect *Rect, scaleMode ScaleMode) (err error) {
 	ret := C.SDL_BlitSurfaceScaled(surface.cptr(), srcRect.cptr(), dst.cptr(), dstRect.cptr(), C.SDL_ScaleMode(scaleMode))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -488,7 +488,7 @@ func (surface *Surface) BlitScaled(srcRect *Rect, dst *Surface, dstRect *Rect, s
 // (https://wiki.libsdl.org/SDL3/SDL_BlitSurfaceUncheckedScaled)
 func (surface *Surface) BlitUncheckedScaled(srcRect *Rect, dst *Surface, dstRect *Rect, scaleMode ScaleMode) (err error) {
 	ret := C.SDL_BlitSurfaceUncheckedScaled(surface.cptr(), srcRect.cptr(), dst.cptr(), dstRect.cptr(), C.SDL_ScaleMode(scaleMode))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -511,7 +511,7 @@ func (surface *Surface) MapRGBA(r, g, b, a uint8) uint32 {
 func (surface *Surface) ReadPixel(x, y int32) (r, g, b, a uint8, err error) {
 	ret := C.SDL_ReadSurfacePixel(surface.cptr(), C.int(x), C.int(y),
 		(*C.Uint8)(&r), (*C.Uint8)(&g), (*C.Uint8)(&b), (*C.Uint8)(&a))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return

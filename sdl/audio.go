@@ -20,9 +20,8 @@ const AUDIO_MASK_FLOAT = C.SDL_AUDIO_MASK_FLOAT
 const AUDIO_MASK_BIG_ENDIAN = C.SDL_AUDIO_MASK_BIG_ENDIAN
 const AUDIO_MASK_SIGNED = C.SDL_AUDIO_MASK_SIGNED
 
-// func DEFINE_AUDIO_FORMAT(signed, bigendian, float, size uint16) uint16 {
-// 	return (((uint16)(signed) << 15) | ((uint16)(bigendian) << 12) | ((uint16)(float) << 8) | ((size) & AUDIO_MASK_BITSIZE))
-// }
+// #define SDL_DEFINE_AUDIO_FORMAT(signed, bigendian, float, size) \
+// (((Uint16)(signed) << 15) | ((Uint16)(bigendian) << 12) | ((Uint16)(float) << 8) | ((size) & SDL_AUDIO_MASK_BITSIZE))
 
 // Audio format.
 // (https://wiki.libsdl.org/SDL3/SDL_AudioFormat)
@@ -36,7 +35,8 @@ func (f AudioFormat) c() C.SDL_AudioFormat {
 }
 
 const (
-	AUDIO_U8 = AudioFormat(C.SDL_AUDIO_U8) /**< Unsigned 8-bit samples */
+	AUDIO_UNKNOWN = AudioFormat(C.SDL_AUDIO_UNKNOWN) /**< Unspecified audio format */
+	AUDIO_U8      = AudioFormat(C.SDL_AUDIO_U8)      /**< Unsigned 8-bit samples */
 	/* SDL_DEFINE_AUDIO_FORMAT(0, 0, 0, 8), */
 	AUDIO_S8 = AudioFormat(C.SDL_AUDIO_S8) /**< Signed 8-bit samples */
 	/* SDL_DEFINE_AUDIO_FORMAT(1, 0, 0, 8), */
@@ -60,49 +60,49 @@ const (
 
 // Retrieve the size, in bits, from an SDL_AudioFormat.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_BITSIZE)
-func (x AudioFormat) Bitsize() uint8 {
+func (x AudioFormat) Bitsize() (bits uint8) {
 	return uint8(x & AUDIO_MASK_BITSIZE)
 }
 
 // Retrieve the size, in bytes, from an SDL_AudioFormat.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_BYTESIZE)
-func (x AudioFormat) Bytesize() uint8 {
+func (x AudioFormat) Bytesize() (btyes uint8) {
 	return x.Bitsize() / 8
 }
 
 // Determine if an SDL_AudioFormat represents floating point data.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_ISFLOAT)
-func (x AudioFormat) IsFloat() bool {
+func (x AudioFormat) IsFloat() (isFloat bool) {
 	return (x & AUDIO_MASK_FLOAT) != 0
 }
 
 // Determine if an SDL_AudioFormat represents bigendian data.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_ISBIGENDIAN)
-func (x AudioFormat) IsBigEndian() bool {
+func (x AudioFormat) IsBigEndian() (isBE bool) {
 	return (x & AUDIO_MASK_BIG_ENDIAN) != 0
 }
 
 // Determine if an SDL_AudioFormat represents littleendian data.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_ISLITTLEENDIAN)
-func (x AudioFormat) IsLittleEndian() bool {
+func (x AudioFormat) IsLittleEndian() (isLE bool) {
 	return !x.IsBigEndian()
 }
 
 // Determine if an SDL_AudioFormat represents signed data.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_ISSIGNED)
-func (x AudioFormat) IsSigned() bool {
+func (x AudioFormat) IsSigned() (signed bool) {
 	return (x & AUDIO_MASK_SIGNED) != 0
 }
 
 // Determine if an SDL_AudioFormat represents integer data.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_ISINT)
-func (x AudioFormat) IsInt() bool {
+func (x AudioFormat) IsInt() (isInt bool) {
 	return !x.IsFloat()
 }
 
 // Determine if an SDL_AudioFormat represents unsigned data.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_ISUNSIGNED)
-func (x AudioFormat) IsUnsigned() bool {
+func (x AudioFormat) IsUnsigned() (unsigned bool) {
 	return !x.IsSigned()
 }
 
@@ -113,7 +113,7 @@ type AudioDeviceID C.SDL_AudioDeviceID
 func (id *AudioDeviceID) cptr() *C.SDL_AudioDeviceID {
 	return (*C.SDL_AudioDeviceID)(unsafe.Pointer(id))
 }
-func (id AudioDeviceID) c() C.SDL_AudioDeviceID {
+func (id AudioDeviceID) cval() C.SDL_AudioDeviceID {
 	return (C.SDL_AudioDeviceID)(id)
 }
 
@@ -139,7 +139,7 @@ func (spec *AudioSpec) cptr() *C.SDL_AudioSpec {
 
 // Calculate the size of each audio frame (in bytes) from an SDL_AudioSpec.
 // (https://wiki.libsdl.org/SDL3/SDL_AUDIO_FRAMESIZE)
-func (x AudioSpec) Framesize() uint32 {
+func (x AudioSpec) Framesize() (size uint32) {
 	return uint32(x.Channels) * uint32(x.Format.Bytesize())
 }
 
@@ -155,48 +155,58 @@ func (s *AudioStream) cptr() *C.SDL_AudioStream {
 
 // Use this function to get the number of built-in audio drivers.
 // (https://wiki.libsdl.org/SDL3/SDL_GetNumAudioDrivers)
-func GetNumAudioDrivers() int {
+func GetNumAudioDrivers() (n int) {
 	return int(C.SDL_GetNumAudioDrivers())
 }
 
 // Use this function to get the name of a built in audio driver.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioDriver)
-func GetAudioDriver(index int) string {
+func GetAudioDriver(index int) (name string) {
 	return C.GoString(C.SDL_GetAudioDriver(C.int(index)))
 }
 
 // Get the name of the current audio driver.
 // (https://wiki.libsdl.org/SDL3/SDL_GetCurrentAudioDriver)
-func GetCurrentAudioDriver() string {
+func GetCurrentAudioDriver() (name string) {
 	return C.GoString(C.SDL_GetCurrentAudioDriver())
 }
 
 // Get a list of currently-connected audio playback devices.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioPlaybackDevices)
-func GetAudioPlaybackDevices() ([]AudioDeviceID, error) {
+func GetAudioPlaybackDevices() (devices []AudioDeviceID, err error) {
 	var count C.int
 	ret := C.SDL_GetAudioPlaybackDevices(&count)
-	if ret != nil {
+	if ret == nil {
 		return nil, GetError()
 	}
-	return unsafe.Slice((*AudioDeviceID)(ret), int(count)), nil
+	// ret needs to be freed so we make a copy of it
+	defer C.SDL_free(unsafe.Pointer(ret))
+	cSlice := unsafe.Slice((*AudioDeviceID)(ret), int(count))
+	goSlice := make([]AudioDeviceID, len(cSlice))
+	copy(goSlice, cSlice)
+	return goSlice, nil
 }
 
 // Get a list of currently-connected audio recording devices.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioRecordingDevices)
-func GetAudioRecordingDevices() ([]AudioDeviceID, error) {
+func GetAudioRecordingDevices() (devices []AudioDeviceID, err error) {
 	var count C.int
 	ret := C.SDL_GetAudioRecordingDevices(&count)
-	if ret != nil {
+	if ret == nil {
 		return nil, GetError()
 	}
-	return unsafe.Slice((*AudioDeviceID)(ret), int(count)), nil
+	// ret needs to be freed so we make a copy of it
+	defer C.SDL_free(unsafe.Pointer(ret))
+	cSlice := unsafe.Slice((*AudioDeviceID)(ret), int(count))
+	goSlice := make([]AudioDeviceID, len(cSlice))
+	copy(goSlice, cSlice)
+	return goSlice, nil
 }
 
 // Get the human-readable name of a specific audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioDeviceName)
 func GetAudioDeviceName(devid AudioDeviceID) (name string, err error) {
-	name = C.GoString(C.SDL_GetAudioDeviceName(devid.c()))
+	name = C.GoString(C.SDL_GetAudioDeviceName(devid.cval()))
 	if len(name) == 0 {
 		err = GetError()
 	}
@@ -205,29 +215,35 @@ func GetAudioDeviceName(devid AudioDeviceID) (name string, err error) {
 
 // Get the current audio format of a specific audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioDeviceFormat)
-func (devid AudioDeviceID) GetFormat() (spec AudioSpec, sample_frames int32, err error) {
-	ret := C.SDL_GetAudioDeviceFormat(devid.c(), spec.cptr(), (*C.int)(&sample_frames))
-	if ret != 0 {
+func GetAudioDeviceFormat(devid AudioDeviceID) (spec AudioSpec, sample_frames int32, err error) {
+	ret := C.SDL_GetAudioDeviceFormat(devid.cval(), spec.cptr(), (*C.int)(&sample_frames))
+	if !ret {
 		err = GetError()
 	}
 	return
 }
 
+// TODO: Not sure if this is correct, seems to seg fault.
 // Get the current channel map of an audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioDeviceChannelMap)
 func GetAudioDeviceChannelMap(devid AudioDeviceID) (channelMap []int32, err error) {
 	var count C.int
-	ret := C.SDL_GetAudioDeviceChannelMap(devid.c(), &count)
+	ret := C.SDL_GetAudioDeviceChannelMap(devid.cval(), &count)
 	if ret == nil {
 		err = GetError()
 	}
-	return unsafe.Slice((*int32)(ret), int(count)), err
+	// ret needs to be freed so we make a copy of it
+	defer C.SDL_free(unsafe.Pointer(ret))
+	cSlice := unsafe.Slice((*int32)(ret), int(count))
+	goSlice := make([]int32, len(cSlice))
+	copy(goSlice, cSlice)
+	return goSlice, err
 }
 
 // Open a specific audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_OpenAudioDevice)
 func OpenAudioDevice(devid AudioDeviceID, spec *AudioSpec) (vid AudioDeviceID, err error) {
-	vid = AudioDeviceID(C.SDL_OpenAudioDevice(devid.c(), spec.cptr()))
+	vid = AudioDeviceID(C.SDL_OpenAudioDevice(devid.cval(), spec.cptr()))
 	if vid == 0 {
 		err = GetError()
 	}
@@ -237,8 +253,8 @@ func OpenAudioDevice(devid AudioDeviceID, spec *AudioSpec) (vid AudioDeviceID, e
 // Use this function to pause audio playback on a specified device.
 // (https://wiki.libsdl.org/SDL3/SDL_PauseAudioDevice)
 func PauseAudioDevice(devid AudioDeviceID) (err error) {
-	ret := C.SDL_PauseAudioDevice(devid.c())
-	if ret != 0 {
+	ret := C.SDL_PauseAudioDevice(devid.cval())
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -247,8 +263,8 @@ func PauseAudioDevice(devid AudioDeviceID) (err error) {
 // Use this function to unpause audio playback on a specified device.
 // (https://wiki.libsdl.org/SDL3/SDL_ResumeAudioDevice)
 func ResumeAudioDevice(devid AudioDeviceID) (err error) {
-	ret := C.SDL_ResumeAudioDevice(devid.c())
-	if ret != 0 {
+	ret := C.SDL_ResumeAudioDevice(devid.cval())
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -257,14 +273,14 @@ func ResumeAudioDevice(devid AudioDeviceID) (err error) {
 // Use this function to query if an audio device is paused.
 // (https://wiki.libsdl.org/SDL3/SDL_AudioDevicePaused)
 func AudioDevicePaused(devid AudioDeviceID) bool {
-	return C.SDL_AudioDevicePaused(devid.c()) != 0
+	return bool(C.SDL_AudioDevicePaused(devid.cval()))
 }
 
 // Get the gain of an audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioDeviceGain)
-func GetAudioDeviceGain(devid AudioDeviceID) (gain float32, err error) {
-	gain = float32(C.SDL_GetAudioDeviceGain(devid.c()))
-	if gain < 0 {
+func GetAudioDeviceGain() (devid AudioDeviceID, gain float32, err error) {
+	gain = float32(C.SDL_GetAudioDeviceGain(devid.cval()))
+	if gain == -1.0 {
 		err = GetError()
 	}
 	return
@@ -273,8 +289,8 @@ func GetAudioDeviceGain(devid AudioDeviceID) (gain float32, err error) {
 // Change the gain of an audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_SetAudioDeviceGain)
 func SetAudioDeviceGain(devid AudioDeviceID, gain float32) (err error) {
-	ret := C.SDL_SetAudioDeviceGain(devid.c(), C.float(gain))
-	if ret != 0 {
+	ret := C.SDL_SetAudioDeviceGain(devid.cval(), C.float(gain))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -282,16 +298,16 @@ func SetAudioDeviceGain(devid AudioDeviceID, gain float32) (err error) {
 
 // Close a previously-opened audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_CloseAudioDevice)
-func (devid AudioDeviceID) Close() {
-	C.SDL_CloseAudioDevice(devid.c())
+func CloseAudioDevice(devid AudioDeviceID) {
+	C.SDL_CloseAudioDevice(devid.cval())
 }
 
 // Bind a list of audio streams to an audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_BindAudioStreams)
-func BindAudioStreams(devid AudioDeviceID, streams []*AudioStream, num_streams int) (err error) {
+func BindAudioStreams(devid AudioDeviceID, streams ...*AudioStream) (err error) {
 	data := unsafe.SliceData(streams)
-	ret := C.SDL_BindAudioStreams(devid.c(), (**C.SDL_AudioStream)(unsafe.Pointer(data)), C.int(num_streams))
-	if ret != 0 {
+	ret := C.SDL_BindAudioStreams(devid.cval(), (**C.SDL_AudioStream)(unsafe.Pointer(data)), C.int(len(streams)))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -300,8 +316,8 @@ func BindAudioStreams(devid AudioDeviceID, streams []*AudioStream, num_streams i
 // Bind a single audio stream to an audio device.
 // (https://wiki.libsdl.org/SDL3/SDL_BindAudioStream)
 func BindAudioStream(devid AudioDeviceID, stream *AudioStream) (err error) {
-	ret := C.SDL_BindAudioStream(devid.c(), stream.cptr())
-	if ret != 0 {
+	ret := C.SDL_BindAudioStream(devid.cval(), stream.cptr())
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -309,7 +325,7 @@ func BindAudioStream(devid AudioDeviceID, stream *AudioStream) (err error) {
 
 // Unbind a list of audio streams from their audio devices.
 // (https://wiki.libsdl.org/SDL3/SDL_UnbindAudioStreams)
-func UnbindAudioStreams(streams []*AudioStream) {
+func UnbindAudioStreams(streams ...*AudioStream) {
 	data := unsafe.SliceData(streams)
 	C.SDL_UnbindAudioStreams((**C.SDL_AudioStream)(unsafe.Pointer(data)), C.int(len(streams)))
 }
@@ -350,7 +366,7 @@ func GetAudioStreamProperties(stream *AudioStream) (properties PropertiesID, err
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioStreamFormat)
 func GetAudioStreamFormat(stream *AudioStream) (src_spec AudioSpec, dst_spec AudioSpec, err error) {
 	ret := C.SDL_GetAudioStreamFormat(stream.cptr(), src_spec.cptr(), dst_spec.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -360,7 +376,7 @@ func GetAudioStreamFormat(stream *AudioStream) (src_spec AudioSpec, dst_spec Aud
 // (https://wiki.libsdl.org/SDL3/SDL_SetAudioStreamFormat)
 func SetAudioStreamFormat(stream *AudioStream, src_spec AudioSpec, dst_spec AudioSpec) (err error) {
 	ret := C.SDL_SetAudioStreamFormat(stream.cptr(), src_spec.cptr(), dst_spec.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -370,7 +386,7 @@ func SetAudioStreamFormat(stream *AudioStream, src_spec AudioSpec, dst_spec Audi
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioStreamFrequencyRatio)
 func GetAudioStreamFrequencyRatio(stream *AudioStream) (ratio float32, err error) {
 	ratio = float32(C.SDL_GetAudioStreamFrequencyRatio(stream.cptr()))
-	if ratio == 0 {
+	if ratio == 0.0 {
 		err = GetError()
 	}
 	return
@@ -380,7 +396,7 @@ func GetAudioStreamFrequencyRatio(stream *AudioStream) (ratio float32, err error
 // (https://wiki.libsdl.org/SDL3/SDL_SetAudioStreamFrequencyRatio)
 func SetAudioStreamFrequencyRatio(stream *AudioStream, ratio float32) (err error) {
 	ret := C.SDL_SetAudioStreamFrequencyRatio(stream.cptr(), C.float(ratio))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -400,7 +416,7 @@ func GetAudioStreamGain(stream *AudioStream) (gain float32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetAudioStreamGain)
 func SetAudioStreamGain(stream *AudioStream, gain float32) (err error) {
 	ret := C.SDL_SetAudioStreamGain(stream.cptr(), C.float(gain))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -427,7 +443,7 @@ func GetAudioStreamOutputChannelMap(stream *AudioStream) []int32 {
 func SetAudioStreamInputChannelMap(stream *AudioStream, chmap []int32) (err error) {
 	data := unsafe.SliceData(chmap)
 	ret := C.SDL_SetAudioStreamInputChannelMap(stream.cptr(), (*C.int)(unsafe.Pointer(data)), C.int(len(chmap)))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -438,7 +454,7 @@ func SetAudioStreamInputChannelMap(stream *AudioStream, chmap []int32) (err erro
 func SetAudioStreamOutputChannelMap(stream *AudioStream, chmap []int32) (err error) {
 	data := unsafe.SliceData(chmap)
 	ret := C.SDL_SetAudioStreamOutputChannelMap(stream.cptr(), (*C.int)(unsafe.Pointer(data)), C.int(len(chmap)))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -449,7 +465,7 @@ func SetAudioStreamOutputChannelMap(stream *AudioStream, chmap []int32) (err err
 func (stream *AudioStream) PutData(buf []byte) (err error) {
 	data := unsafe.SliceData(buf)
 	ret := C.SDL_PutAudioStreamData(stream.cptr(), unsafe.Pointer(data), C.int(len(buf)))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -468,14 +484,22 @@ func (stream *AudioStream) GetData(buf []byte) (n int, err error) {
 
 // Get the number of converted/resampled bytes available.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioStreamAvailable)
-func (stream *AudioStream) GetAvailable() int {
-	return int(C.SDL_GetAudioStreamAvailable(stream.cptr()))
+func (stream *AudioStream) GetAvailable() (n int, err error) {
+	n = int(C.SDL_GetAudioStreamAvailable(stream.cptr()))
+	if n == -1 {
+		err = GetError()
+	}
+	return
 }
 
 // Get the number of bytes currently queued.
 // (https://wiki.libsdl.org/SDL3/SDL_GetAudioStreamQueued)
-func (stream *AudioStream) GetQueued() int {
-	return int(C.SDL_GetAudioStreamQueued(stream.cptr()))
+func (stream *AudioStream) GetQueued() (n int, err error) {
+	n = int(C.SDL_GetAudioStreamQueued(stream.cptr()))
+	if n == -1 {
+		err = GetError()
+	}
+	return
 }
 
 // Tell the stream that you're done sending data, and anything being buffered
@@ -483,7 +507,7 @@ func (stream *AudioStream) GetQueued() int {
 // (https://wiki.libsdl.org/SDL3/SDL_FlushAudioStream)
 func (stream *AudioStream) Flush() (err error) {
 	ret := C.SDL_FlushAudioStream(stream.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -493,7 +517,7 @@ func (stream *AudioStream) Flush() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_ClearAudioStream)
 func (stream *AudioStream) Clear() (err error) {
 	ret := C.SDL_ClearAudioStream(stream.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -504,7 +528,7 @@ func (stream *AudioStream) Clear() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_PauseAudioStreamDevice)
 func (stream *AudioStream) PauseDevice() (err error) {
 	ret := C.SDL_PauseAudioStreamDevice(stream.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -515,7 +539,7 @@ func (stream *AudioStream) PauseDevice() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_ResumeAudioStreamDevice)
 func (stream *AudioStream) ResumeDevice() (err error) {
 	ret := C.SDL_ResumeAudioStreamDevice(stream.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -523,9 +547,9 @@ func (stream *AudioStream) ResumeDevice() (err error) {
 
 // Lock an audio stream for serialized access.
 // (https://wiki.libsdl.org/SDL3/SDL_LockAudioStream)
-func LockAudioStream(stream *AudioStream) (err error) {
+func (stream *AudioStream) Lock() (err error) {
 	ret := C.SDL_LockAudioStream(stream.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -533,9 +557,9 @@ func LockAudioStream(stream *AudioStream) (err error) {
 
 // Unlock an audio stream for serialized access.
 // (https://wiki.libsdl.org/SDL3/SDL_UnlockAudioStream)
-func UnlockAudioStream(stream *AudioStream) (err error) {
+func (stream *AudioStream) Unlock() (err error) {
 	ret := C.SDL_UnlockAudioStream(stream.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -554,17 +578,17 @@ var audioStreamGetCallbacks = map[*AudioStream]audioStreamCallbackData{}
 
 //export goAudioStreamGetCallback
 func goAudioStreamGetCallback(stream *C.SDL_AudioStream, additional_amount, total_amount C.int) {
-	cd, ok := audioStreamGetCallbacks[(*AudioStream)(stream)]
+	cb, ok := audioStreamGetCallbacks[(*AudioStream)(stream)]
 	if !ok {
 		fmt.Printf("No get callback for stream %p\n", stream)
 		return
 	}
-	cd.callback(cd.userdata, (*AudioStream)(stream), int(additional_amount), int(total_amount))
+	cb.callback(cb.userdata, (*AudioStream)(stream), int(additional_amount), int(total_amount))
 }
 
 // Set a callback that runs when data is requested from an audio stream.
 // (https://wiki.libsdl.org/SDL3/SDL_SetAudioStreamGetCallback)
-func (stream *AudioStream) SetAudioStreamGetCallback(callback AudioStreamCallback, userdata any) (err error) {
+func (stream *AudioStream) SetGetCallback(callback AudioStreamCallback, userdata any) (err error) {
 	var cCallback C.SDL_AudioStreamCallback = nil
 	delete(audioStreamGetCallbacks, stream)
 	if callback != nil {
@@ -572,7 +596,7 @@ func (stream *AudioStream) SetAudioStreamGetCallback(callback AudioStreamCallbac
 		cCallback = C.SDL_AudioStreamCallback(C.cgoAudioStreamGetCallback)
 	}
 	ret := C.SDL_SetAudioStreamGetCallback(stream.cptr(), cCallback, nil)
-	if ret < 0 {
+	if !ret {
 		delete(audioStreamGetCallbacks, stream)
 		err = GetError()
 	}
@@ -593,7 +617,7 @@ func goAudioStreamPutCallback(stream *C.SDL_AudioStream, additional_amount, tota
 
 // Set a callback that runs when data is added to an audio stream.
 // (https://wiki.libsdl.org/SDL3/SDL_SetAudioStreamPutCallback)
-func (stream *AudioStream) SetAudioStreamPutCallback(callback AudioStreamCallback, userdata any) (err error) {
+func (stream *AudioStream) SetPutCallback(callback AudioStreamCallback, userdata any) (err error) {
 	var cCallback C.SDL_AudioStreamCallback = nil
 	delete(audioStreamPutCallbacks, stream)
 	if callback != nil {
@@ -601,7 +625,7 @@ func (stream *AudioStream) SetAudioStreamPutCallback(callback AudioStreamCallbac
 		cCallback = C.SDL_AudioStreamCallback(C.cgoAudioStreamPutCallback)
 	}
 	ret := C.SDL_SetAudioStreamPutCallback(stream.cptr(), cCallback, nil)
-	if ret < 0 {
+	if !ret {
 		delete(audioStreamPutCallbacks, stream)
 		err = GetError()
 	}
@@ -614,6 +638,7 @@ func (stream *AudioStream) Destroy() {
 	C.SDL_DestroyAudioStream(stream.cptr())
 }
 
+// TODO: this needs cleaned up and tested. Memory leak if a different callback is set with one of the other methods?
 // When OpenAudioDeviceStream is used with a callback we don't know if it is a Put or Get callback.
 var audioStreamUnknownCallbacks = map[*AudioStream]audioStreamCallbackData{}
 
@@ -634,7 +659,7 @@ func OpenAudioDeviceStream(devid AudioDeviceID, spec *AudioSpec, callback AudioS
 	if callback != nil {
 		cCallback = C.SDL_AudioStreamCallback(C.cgoAudioStreamUnknownCallback)
 	}
-	stream = (*AudioStream)(C.SDL_OpenAudioDeviceStream(devid.c(), spec.cptr(), cCallback, nil))
+	stream = (*AudioStream)(C.SDL_OpenAudioDeviceStream(devid.cval(), spec.cptr(), cCallback, nil))
 	if stream == nil {
 		err = GetError()
 	} else if callback != nil {
@@ -673,14 +698,15 @@ func SetAudioPostmixCallback(devid AudioDeviceID, callback AudioPostmixCallback,
 		audioPostmixCallbacks[devid] = audioPostmixCallbackData{callback, userdata}
 		cCallback = C.SDL_AudioPostmixCallback(C.cgoAudioPostmixCallback)
 	}
-	ret := C.SDL_SetAudioPostmixCallback(devid.c(), cCallback, unsafe.Pointer(uintptr(devid)))
-	if ret != 0 {
+	ret := C.SDL_SetAudioPostmixCallback(devid.cval(), cCallback, unsafe.Pointer(uintptr(devid)))
+	if !ret {
 		delete(audioPostmixCallbacks, devid)
 		err = GetError()
 	}
 	return
 }
 
+// TODO: make a copy and free the SDL buffer
 // Load the audio data of a WAVE file into memory.
 // Returned data must be freed with sdl.Free some how.
 // (https://wiki.libsdl.org/SDL3/SDL_LoadWAV_IO)
@@ -689,8 +715,8 @@ func (src *IOStream) LoadWAV(closeio bool) (spec *AudioSpec, data []uint8, err e
 	// So i can create a func (buf *WaveBuffer) Free() { C.SDL_Free(buf.cptr()) }
 	var count C.Uint32
 	var cdata *C.Uint8
-	ret := C.SDL_LoadWAV_IO(src.cptr(), sdlBool(closeio), spec.cptr(), &cdata, &count)
-	if ret != 0 {
+	ret := C.SDL_LoadWAV_IO(src.cptr(), (C.bool)(closeio), spec.cptr(), &cdata, &count)
+	if !ret {
 		err = GetError()
 		return
 	}
@@ -698,6 +724,7 @@ func (src *IOStream) LoadWAV(closeio bool) (spec *AudioSpec, data []uint8, err e
 	return
 }
 
+// TODO: make a copy and free the SDL buffer
 // Loads a WAV from a file path.
 // (https://wiki.libsdl.org/SDL3/SDL_LoadWAV)
 func LoadWAV(path string) (spec AudioSpec, data []uint8, err error) {
@@ -708,7 +735,7 @@ func LoadWAV(path string) (spec AudioSpec, data []uint8, err error) {
 	var count C.Uint32
 	var cdata *C.Uint8
 	ret := C.SDL_LoadWAV(C.CString(path), spec.cptr(), &cdata, &count)
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 		return
 	}
@@ -722,7 +749,7 @@ func MixAudio(dst []uint8, src []uint8, format AudioFormat, volume float32) (err
 	dstPtr := unsafe.SliceData(dst)
 	srcPtr := unsafe.SliceData(src)
 	ret := C.SDL_MixAudio((*C.Uint8)(dstPtr), (*C.Uint8)(srcPtr), format.c(), C.Uint32(len(dst)), C.float(volume))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -735,11 +762,17 @@ func ConvertAudioSamples(srcSpec *AudioSpec, src []uint8, dstSpec *AudioSpec) (d
 	var count C.int
 	var cdata *C.Uint8
 	ret := C.SDL_ConvertAudioSamples(srcSpec.cptr(), (*C.Uint8)(srcPtr), C.int(len(src)), dstSpec.cptr(), &cdata, &count)
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 		return
 	}
 	return unsafe.Slice((*uint8)(cdata), count), nil
+}
+
+// Get the human readable name of an audio format.
+// (https://wiki.libsdl.org/SDL3/SDL_GetAudioFormatName)
+func GetAudioFormatName(format AudioFormat) string {
+	return C.GoString(C.SDL_GetAudioFormatName(format.c()))
 }
 
 // Get the appropriate memset value for silencing an audio format.

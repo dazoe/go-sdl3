@@ -15,7 +15,7 @@ type KeyboardID C.SDL_KeyboardID
 // Return whether a keyboard is currently connected.
 // (https://wiki.libsdl.org/SDL3/SDL_HasKeyboard)
 func HasKeyboard() bool {
-	return C.SDL_HasKeyboard() != 0
+	return bool(C.SDL_HasKeyboard())
 }
 
 // Get a list of currently connected keyboards.
@@ -26,7 +26,11 @@ func GetKeyboards() ([]KeyboardID, error) {
 	if ret == nil {
 		return nil, GetError()
 	}
-	return unsafe.Slice((*KeyboardID)(ret), int(count)), nil
+	defer C.SDL_free(unsafe.Pointer(ret))
+	cSlice := unsafe.Slice((*KeyboardID)(ret), int(count))
+	goSlice := make([]KeyboardID, len(cSlice))
+	copy(goSlice, cSlice)
+	return goSlice, nil
 }
 
 // Get the name of a keyboard.
@@ -47,10 +51,10 @@ func GetKeyboardFocus() *Window {
 
 // Get a snapshot of the current state of the keyboard.
 // (https://wiki.libsdl.org/SDL3/SDL_GetKeyboardState)
-func GetKeyboardState() []uint8 {
+func GetKeyboardState() []bool {
 	var numkeys C.int
 	ret := C.SDL_GetKeyboardState(&numkeys)
-	return unsafe.Slice((*uint8)(ret), int(numkeys))
+	return unsafe.Slice((*bool)(ret), int(numkeys))
 }
 
 // Clear the state of the keyboard.
@@ -71,25 +75,11 @@ func SetModState(modstate Keymod) {
 	C.SDL_SetModState(C.SDL_Keymod(modstate))
 }
 
-// Get the key code corresponding to the given scancode according to a default
-// en_US keyboard layout.
-// (https://wiki.libsdl.org/SDL3/SDL_GetDefaultKeyFromScancode)
-func GetDefaultKeyFromScancode(scancode Scancode, modstate Keymod) Keycode {
-	return Keycode(C.SDL_GetDefaultKeyFromScancode(C.SDL_Scancode(scancode), C.SDL_Keymod(modstate)))
-}
-
 // Get the key code corresponding to the given scancode according to the
 // current keyboard layout.
 // (https://wiki.libsdl.org/SDL3/SDL_GetKeyFromScancode)
-func GetKeyFromScancode(scancode Scancode, modstate Keymod) Keycode {
-	return Keycode(C.SDL_GetKeyFromScancode(C.SDL_Scancode(scancode), C.SDL_Keymod(modstate)))
-}
-
-// Get the scancode corresponding to the given key code according to a default
-// en_US keyboard layout.
-// (https://wiki.libsdl.org/SDL3/SDL_GetDefaultScancodeFromKey)
-func GetDefaultScancodeFromKey(key Keycode, modstate *Keymod) Scancode {
-	return Scancode(C.SDL_GetDefaultScancodeFromKey(C.SDL_Keycode(key), (*C.SDL_Keymod)(modstate)))
+func GetKeyFromScancode(scancode Scancode, modstate Keymod, key_event bool) Keycode {
+	return Keycode(C.SDL_GetKeyFromScancode(C.SDL_Scancode(scancode), C.SDL_Keymod(modstate), (C.bool)(key_event)))
 }
 
 // Get the scancode corresponding to the given key code according to the
@@ -103,7 +93,7 @@ func GetScancodeFromKey(key Keycode, modstate *Keymod) Scancode {
 // (https://wiki.libsdl.org/SDL3/SDL_SetScancodeName)
 func SetScancodeName(scancode Scancode, name string) (err error) {
 	ret := C.SDL_SetScancodeName(C.SDL_Scancode(scancode), C.CString(name))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -145,23 +135,68 @@ func GetKeyFromName(name string) (code Keycode, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_StartTextInput)
 func (window *Window) StartTextInput() (err error) {
 	ret := C.SDL_StartTextInput(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
 }
 
+// Text input type.
+// (https://wiki.libsdl.org/SDL3/SDL_TextInputType)
+type TextInputType C.SDL_TextInputType
+
+const (
+	TEXTINPUT_TYPE_TEXT                    = TextInputType(C.SDL_TEXTINPUT_TYPE_TEXT)                    /**< The input is text */
+	TEXTINPUT_TYPE_TEXT_NAME               = TextInputType(C.SDL_TEXTINPUT_TYPE_TEXT_NAME)               /**< The input is a person's name */
+	TEXTINPUT_TYPE_TEXT_EMAIL              = TextInputType(C.SDL_TEXTINPUT_TYPE_TEXT_EMAIL)              /**< The input is an e-mail address */
+	TEXTINPUT_TYPE_TEXT_USERNAME           = TextInputType(C.SDL_TEXTINPUT_TYPE_TEXT_USERNAME)           /**< The input is a username */
+	TEXTINPUT_TYPE_TEXT_PASSWORD_HIDDEN    = TextInputType(C.SDL_TEXTINPUT_TYPE_TEXT_PASSWORD_HIDDEN)    /**< The input is a secure password that is hidden */
+	TEXTINPUT_TYPE_TEXT_PASSWORD_VISIBLE   = TextInputType(C.SDL_TEXTINPUT_TYPE_TEXT_PASSWORD_VISIBLE)   /**< The input is a secure password that is visible */
+	TEXTINPUT_TYPE_NUMBER                  = TextInputType(C.SDL_TEXTINPUT_TYPE_NUMBER)                  /**< The input is a number */
+	TEXTINPUT_TYPE_NUMBER_PASSWORD_HIDDEN  = TextInputType(C.SDL_TEXTINPUT_TYPE_NUMBER_PASSWORD_HIDDEN)  /**< The input is a secure PIN that is hidden */
+	TEXTINPUT_TYPE_NUMBER_PASSWORD_VISIBLE = TextInputType(C.SDL_TEXTINPUT_TYPE_NUMBER_PASSWORD_VISIBLE) /**< The input is a secure PIN that is visible */
+)
+
+// Auto capitalization type.
+// (https://wiki.libsdl.org/SDL3/SDL_Capitalization)
+type Capitalization C.SDL_Capitalization
+
+const (
+	CAPITALIZE_NONE      = Capitalization(C.SDL_CAPITALIZE_NONE)      /**< No auto-capitalization will be done */
+	CAPITALIZE_SENTENCES = Capitalization(C.SDL_CAPITALIZE_SENTENCES) /**< The first letter of sentences will be capitalized */
+	CAPITALIZE_WORDS     = Capitalization(C.SDL_CAPITALIZE_WORDS)     /**< The first letter of words will be capitalized */
+	CAPITALIZE_LETTERS   = Capitalization(C.SDL_CAPITALIZE_LETTERS)   /**< All letters will be capitalized */
+)
+
+// Start accepting Unicode text input events in a window, with properties
+// (https://wiki.libsdl.org/SDL3/SDL_StartTextInputWithProperties)
+func (window *Window) StartTextInputWithProperties(props PropertiesID) (err error) {
+	ret := C.SDL_StartTextInputWithProperties(window.cptr(), C.SDL_PropertiesID(props))
+	if !ret {
+		err = GetError()
+	}
+	return
+}
+
+const (
+	PROP_TEXTINPUT_TYPE_NUMBER              = "SDL.textinput.type"
+	PROP_TEXTINPUT_CAPITALIZATION_NUMBER    = "SDL.textinput.capitalization"
+	PROP_TEXTINPUT_AUTOCORRECT_BOOLEAN      = "SDL.textinput.autocorrect"
+	PROP_TEXTINPUT_MULTILINE_BOOLEAN        = "SDL.textinput.multiline"
+	PROP_TEXTINPUT_ANDROID_INPUTTYPE_NUMBER = "SDL.textinput.android.inputtype"
+)
+
 // Check whether or not Unicode text input events are enabled for a window.
 // (https://wiki.libsdl.org/SDL3/SDL_TextInputActive)
 func (window *Window) TextInputActive() bool {
-	return C.SDL_TextInputActive(window.cptr()) != 0
+	return bool(C.SDL_TextInputActive(window.cptr()))
 }
 
 // Stop receiving any text input events in a window.
 // (https://wiki.libsdl.org/SDL3/SDL_StopTextInput)
 func (window *Window) StopTextInput() (err error) {
 	ret := C.SDL_StopTextInput(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -171,7 +206,7 @@ func (window *Window) StopTextInput() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_ClearComposition)
 func (window *Window) ClearComposition() (err error) {
 	ret := C.SDL_ClearComposition(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -179,9 +214,9 @@ func (window *Window) ClearComposition() (err error) {
 
 // Set the area used to type Unicode text input.
 // (https://wiki.libsdl.org/SDL3/SDL_SetTextInputArea)
-func (window *Window) SetTextInputArea(rect Rect, cursor int32) (err error) {
+func (window *Window) SetTextInputArea(rect *Rect, cursor int32) (err error) {
 	ret := C.SDL_SetTextInputArea(window.cptr(), rect.cptr(), C.int(cursor))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -191,7 +226,7 @@ func (window *Window) SetTextInputArea(rect Rect, cursor int32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetTextInputArea)
 func (window *Window) GetTextInputArea() (rect Rect, cursor int32, err error) {
 	ret := C.SDL_GetTextInputArea(window.cptr(), rect.cptr(), (*C.int)(&cursor))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -200,11 +235,11 @@ func (window *Window) GetTextInputArea() (rect Rect, cursor int32, err error) {
 // Check whether the platform has screen keyboard support.
 // (https://wiki.libsdl.org/SDL3/SDL_HasScreenKeyboardSupport)
 func HasScreenKeyboardSupport() bool {
-	return C.SDL_HasScreenKeyboardSupport() != 0
+	return bool(C.SDL_HasScreenKeyboardSupport())
 }
 
 // Check whether the screen keyboard is shown for given window.
 // (https://wiki.libsdl.org/SDL3/SDL_ScreenKeyboardShown)
 func (window *Window) ScreenKeyboardShown() bool {
-	return C.SDL_ScreenKeyboardShown(window.cptr()) != 0
+	return bool(C.SDL_ScreenKeyboardShown(window.cptr()))
 }

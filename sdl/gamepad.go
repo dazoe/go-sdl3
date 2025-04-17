@@ -1,5 +1,7 @@
 package sdl
 
+// TODO: left off here
+
 /*
 #include <SDL3/SDL_gamepad.h>
 #include "stdlib.h"
@@ -7,7 +9,6 @@ package sdl
 import "C"
 import (
 	"encoding/binary"
-	"fmt"
 	"unsafe"
 )
 
@@ -30,6 +31,10 @@ func (t GamepadType) c() C.SDL_GamepadType {
 	return C.SDL_GamepadType(t)
 }
 
+func (t GamepadType) String() string {
+	return GetGamepadStringForType(t)
+}
+
 const (
 	GAMEPAD_TYPE_UNKNOWN                      = GamepadType(C.SDL_GAMEPAD_TYPE_UNKNOWN)
 	GAMEPAD_TYPE_STANDARD                     = GamepadType(C.SDL_GAMEPAD_TYPE_STANDARD)
@@ -42,7 +47,7 @@ const (
 	GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT  = GamepadType(C.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT)
 	GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT = GamepadType(C.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT)
 	GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR  = GamepadType(C.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR)
-	GAMEPAD_TYPE_MAX                          = GamepadType(C.SDL_GAMEPAD_TYPE_MAX)
+	GAMEPAD_TYPE_COUNT                        = GamepadType(C.SDL_GAMEPAD_TYPE_COUNT)
 )
 
 // The list of buttons available on a gamepad
@@ -51,6 +56,10 @@ type GamepadButton C.SDL_GamepadButton
 
 func (b GamepadButton) c() C.SDL_GamepadButton {
 	return C.SDL_GamepadButton(b)
+}
+
+func (b GamepadButton) String() string {
+	return GetGamepadStringForButton(b)
 }
 
 const (
@@ -81,7 +90,7 @@ const (
 	GAMEPAD_BUTTON_MISC4          = GamepadButton(C.SDL_GAMEPAD_BUTTON_MISC4)         /* Additional button */
 	GAMEPAD_BUTTON_MISC5          = GamepadButton(C.SDL_GAMEPAD_BUTTON_MISC5)         /* Additional button */
 	GAMEPAD_BUTTON_MISC6          = GamepadButton(C.SDL_GAMEPAD_BUTTON_MISC6)         /* Additional button */
-	GAMEPAD_BUTTON_MAX            = GamepadButton(C.SDL_GAMEPAD_BUTTON_MAX)
+	GAMEPAD_BUTTON_COUNT          = GamepadButton(C.SDL_GAMEPAD_BUTTON_COUNT)
 )
 
 // The set of gamepad button labels
@@ -108,6 +117,10 @@ func (a GamepadAxis) c() C.SDL_GamepadAxis {
 	return C.SDL_GamepadAxis(a)
 }
 
+func (a GamepadAxis) String() string {
+	return GetGamepadStringForAxis(a)
+}
+
 const (
 	GAMEPAD_AXIS_INVALID       = GamepadAxis(C.SDL_GAMEPAD_AXIS_INVALID)
 	GAMEPAD_AXIS_LEFTX         = GamepadAxis(C.SDL_GAMEPAD_AXIS_LEFTX)
@@ -116,7 +129,7 @@ const (
 	GAMEPAD_AXIS_RIGHTY        = GamepadAxis(C.SDL_GAMEPAD_AXIS_RIGHTY)
 	GAMEPAD_AXIS_LEFT_TRIGGER  = GamepadAxis(C.SDL_GAMEPAD_AXIS_LEFT_TRIGGER)
 	GAMEPAD_AXIS_RIGHT_TRIGGER = GamepadAxis(C.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
-	GAMEPAD_AXIS_MAX           = GamepadAxis(C.SDL_GAMEPAD_AXIS_MAX)
+	GAMEPAD_AXIS_COUNT         = GamepadAxis(C.SDL_GAMEPAD_AXIS_COUNT)
 )
 
 // Types of gamepad control bindings.
@@ -130,6 +143,7 @@ const (
 	GAMEPAD_BINDTYPE_HAT    = GamepadBindingType(C.SDL_GAMEPAD_BINDTYPE_HAT)
 )
 
+// TODO: make better?
 // A mapping between one joystick input to a gamepad control.
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadBinding)
 type GamepadBinding C.SDL_GamepadBinding
@@ -187,7 +201,7 @@ func AddGamepadMapping(mapping string) error {
 // Load a set of gamepad mappings from an SDL_IOStream.
 // (https://wiki.libsdl.org/SDL3/SDL_AddGamepadMappingsFromIO)
 func AddGamepadMappingsFromIO(src *IOStream, closeio bool) (n int32, err error) {
-	n = int32(C.SDL_AddGamepadMappingsFromIO(src.cptr(), sdlBool(closeio)))
+	n = int32(C.SDL_AddGamepadMappingsFromIO(src.cptr(), (C.bool)(closeio)))
 	if n < 0 {
 		err = GetError()
 	}
@@ -210,7 +224,7 @@ func AddGamepadMappingsFromFile(file string) (n int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_ReloadGamepadMappings)
 func ReloadGamepadMappings() error {
 	ret := C.SDL_ReloadGamepadMappings()
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -261,7 +275,7 @@ func (id JoystickID) SetMapping(mapping string) error {
 	cMapping := C.CString(mapping)
 	defer C.free(unsafe.Pointer(cMapping))
 	ret := C.SDL_SetGamepadMapping(id.c(), cMapping)
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -270,7 +284,7 @@ func (id JoystickID) SetMapping(mapping string) error {
 // Return whether a gamepad is currently connected.
 // (https://wiki.libsdl.org/SDL3/SDL_HasGamepad)
 func HasGamepad() bool {
-	return C.SDL_HasGamepad() == C.SDL_TRUE
+	return bool(C.SDL_HasGamepad())
 }
 
 // Get a list of currently connected gamepads.
@@ -293,7 +307,7 @@ func GetGamepads() ([]JoystickID, error) {
 // Check if the given joystick is supported by the gamepad interface.
 // (https://wiki.libsdl.org/SDL3/SDL_IsGamepad)
 func (id JoystickID) IsGamepad() bool {
-	return C.SDL_IsGamepad(id.c()) == C.SDL_TRUE
+	return bool(C.SDL_IsGamepad(id.c()))
 }
 
 // Get the implementation dependent name of a gamepad.
@@ -324,8 +338,8 @@ func (id JoystickID) GetGamepadPlayerIndex() int32 {
 
 // Get the implementation-dependent GUID of a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGamepadGUIDForID)
-func (id JoystickID) GetGamepadGUID() (GUID, error) {
-	return GUID(C.SDL_GetGamepadGUIDForID(id.c())), nil
+func (id JoystickID) GetGamepadGUID() GUID {
+	return GUID(C.SDL_GetGamepadGUIDForID(id.c()))
 }
 
 // Get the USB vendor ID of a gamepad, if available.
@@ -360,13 +374,13 @@ func (id JoystickID) GetRealGamepadType() GamepadType {
 
 // Get the mapping of a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGamepadMappingForID)
-func (id JoystickID) GetGamepadMapping() (string, error) {
+func (id JoystickID) GetGamepadMapping() string {
 	ret := C.SDL_GetGamepadMappingForID(id.c())
 	if ret == nil {
-		return "", GetError()
+		return ""
 	}
 	defer C.SDL_free(unsafe.Pointer(ret))
-	return C.GoString(ret), nil
+	return C.GoString(ret)
 }
 
 // Open a gamepad for use.
@@ -392,12 +406,8 @@ func (id JoystickID) GetGamepad() (*Gamepad, error) {
 
 // Get the SDL_Gamepad associated with a player index.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGamepadFromPlayerIndex)
-func GetGamepadFromPlayerIndex(playerIndex int32) (*Gamepad, error) {
-	ret := C.SDL_GetGamepadFromPlayerIndex(C.int(playerIndex))
-	if ret == nil {
-		return nil, GetError()
-	}
-	return (*Gamepad)(ret), nil
+func GetGamepadFromPlayerIndex(playerIndex int32) *Gamepad {
+	return (*Gamepad)(C.SDL_GetGamepadFromPlayerIndex(C.int(playerIndex)))
 }
 
 // Get the properties associated with an opened gamepad.
@@ -462,7 +472,7 @@ func (g *Gamepad) GetPlayerIndex() int32 {
 // (https://wiki.libsdl.org/SDL3/SDL_SetGamepadPlayerIndex)
 func (g *Gamepad) SetPlayerIndex(playerIndex int32) error {
 	ret := C.SDL_SetGamepadPlayerIndex(g.cptr(), C.int(playerIndex))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -524,7 +534,7 @@ func (g *Gamepad) GetPowerInfo() (percent int32, state PowerState) {
 // Check if a gamepad has been opened and is currently connected.
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadConnected)
 func (g *Gamepad) Connected() bool {
-	return C.SDL_GamepadConnected(g.cptr()) == C.SDL_TRUE
+	return bool(C.SDL_GamepadConnected(g.cptr()))
 }
 
 // Get the underlying joystick from a gamepad.
@@ -540,15 +550,17 @@ func (g *Gamepad) GetJoystick() (*Joystick, error) {
 // Set the state of gamepad event processing.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGamepadEventsEnabled)
 func (g *Gamepad) SetEventsEnabled(enabled bool) {
-	C.SDL_SetGamepadEventsEnabled(sdlBool(enabled))
+	C.SDL_SetGamepadEventsEnabled((C.bool)(enabled))
 }
 
 // Query the state of gamepad event processing.
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadEventsEnabled)
 func (g *Gamepad) EventsEnabled() bool {
-	return C.SDL_GamepadEventsEnabled() == C.SDL_TRUE
+	return bool(C.SDL_GamepadEventsEnabled())
 }
 
+// TODO: needs to be tested, does the copy copy the pointers in the array or the data they point to?
+// also what should be copied? are the pointers valid for the lifetime of the SDL?, or just Gamepad? or not after SDL_free?
 // Get the SDL joystick layer bindings for a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGamepadBindings)
 func (g *Gamepad) GetBindings() ([]*GamepadBinding, error) {
@@ -601,13 +613,12 @@ func GetGamepadStringForAxis(a GamepadAxis) string {
 // Query whether a gamepad has a given axis.
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadHasAxis)
 func (g *Gamepad) HasAxis(a GamepadAxis) bool {
-	return C.SDL_GamepadHasAxis(g.cptr(), a.c()) == C.SDL_TRUE
+	return bool(C.SDL_GamepadHasAxis(g.cptr(), a.c()))
 }
 
 // Get the current state of an axis control on a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGamepadAxis)
 func (g *Gamepad) GetAxis(a GamepadAxis) (int16, error) {
-	ClearError()
 	return int16(C.SDL_GetGamepadAxis(g.cptr(), a.c())), GetError()
 }
 
@@ -628,14 +639,13 @@ func GetGamepadStringForButton(b GamepadButton) string {
 // Query whether a gamepad has a given button.
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadHasButton)
 func (g *Gamepad) HasButton(b GamepadButton) bool {
-	return C.SDL_GamepadHasButton(g.cptr(), b.c()) == C.SDL_TRUE
+	return bool(C.SDL_GamepadHasButton(g.cptr(), b.c()))
 }
 
 // Get the current state of a button on a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGamepadButton)
-func (g *Gamepad) GetButton(b GamepadButton) (uint8, error) {
-	ClearError()
-	return uint8(C.SDL_GetGamepadButton(g.cptr(), b.c())), GetError()
+func (g *Gamepad) GetButton(b GamepadButton) bool {
+	return bool(C.SDL_GetGamepadButton(g.cptr(), b.c()))
 }
 
 // Get the label of a button on a gamepad.
@@ -665,10 +675,9 @@ func (g *Gamepad) NumTouchpadFingers(touchpad int) int32 {
 
 // Get the current state of a finger on a touchpad on a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGamepadTouchpadFinger)
-func (g *Gamepad) GetTouchpadFinger(touchpad int, finger int) (state uint8, x, y, pressure float32, err error) {
-	ClearError()
-	ret := C.SDL_GetGamepadTouchpadFinger(g.cptr(), C.int(touchpad), C.int(finger), (*C.Uint8)(&state), (*C.float)(&x), (*C.float)(&y), (*C.float)(&pressure))
-	if ret < 0 {
+func (g *Gamepad) GetTouchpadFinger(touchpad int, finger int) (down bool, x, y, pressure float32, err error) {
+	ret := C.SDL_GetGamepadTouchpadFinger(g.cptr(), C.int(touchpad), C.int(finger), (*C.bool)(&down), (*C.float)(&x), (*C.float)(&y), (*C.float)(&pressure))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -677,14 +686,14 @@ func (g *Gamepad) GetTouchpadFinger(touchpad int, finger int) (state uint8, x, y
 // Return whether a gamepad has a particular sensor.
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadHasSensor)
 func (g *Gamepad) HasSensor(t SensorType) bool {
-	return C.SDL_GamepadHasSensor(g.cptr(), t.c()) == C.SDL_TRUE
+	return bool(C.SDL_GamepadHasSensor(g.cptr(), t.c()))
 }
 
 // Set whether data reporting for a gamepad sensor is enabled.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGamepadSensorEnabled)
 func (g *Gamepad) SetSensorEnabled(t SensorType, enabled bool) error {
-	ret := C.SDL_SetGamepadSensorEnabled(g.cptr(), t.c(), sdlBool(enabled))
-	if ret < 0 {
+	ret := C.SDL_SetGamepadSensorEnabled(g.cptr(), t.c(), (C.bool)(enabled))
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -693,7 +702,7 @@ func (g *Gamepad) SetSensorEnabled(t SensorType, enabled bool) error {
 // Query whether sensor data reporting is enabled for a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_GamepadSensorEnabled)
 func (g *Gamepad) SensorEnabled(t SensorType) bool {
-	return C.SDL_GamepadSensorEnabled(g.cptr(), t.c()) == C.SDL_TRUE
+	return bool(C.SDL_GamepadSensorEnabled(g.cptr(), t.c()))
 }
 
 // Get the data rate (number of events per second) of a gamepad sensor.
@@ -708,7 +717,7 @@ func (g *Gamepad) SensorData(t SensorType, data []float32) error {
 	dataPtr := (*C.float)(unsafe.SliceData(data))
 	num_values := C.int(len(data))
 	ret := C.SDL_GetGamepadSensorData(g.cptr(), t.c(), dataPtr, num_values)
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -716,16 +725,19 @@ func (g *Gamepad) SensorData(t SensorType, data []float32) error {
 
 // Start a rumble effect on a gamepad.
 // (https://wiki.libsdl.org/SDL3/SDL_RumbleGamepad)
-func (g *Gamepad) Rumble(low_frequency_rumble, high_frequency_rumble uint16, duration_ms uint32) bool {
-	fmt.Printf("Rumble: %v %v %v\n", low_frequency_rumble, high_frequency_rumble, duration_ms)
-	return C.SDL_RumbleGamepad(g.cptr(), C.Uint16(low_frequency_rumble), C.Uint16(high_frequency_rumble), C.Uint32(duration_ms)) == 0
+func (g *Gamepad) Rumble(low_frequency_rumble, high_frequency_rumble uint16, duration_ms uint32) (bool, error) {
+	ret := C.SDL_RumbleGamepad(g.cptr(), C.Uint16(low_frequency_rumble), C.Uint16(high_frequency_rumble), C.Uint32(duration_ms))
+	if !ret {
+		return false, GetError()
+	}
+	return true, nil
 }
 
 // Start a rumble effect in the gamepad's triggers.
 // (https://wiki.libsdl.org/SDL3/SDL_RumbleGamepadTriggers)
 func (g *Gamepad) RumbleTriggers(left_rumble, right_rumble uint16, duration_ms uint32) error {
 	ret := C.SDL_RumbleGamepadTriggers(g.cptr(), C.Uint16(left_rumble), C.Uint16(right_rumble), C.Uint32(duration_ms))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -735,7 +747,7 @@ func (g *Gamepad) RumbleTriggers(left_rumble, right_rumble uint16, duration_ms u
 // (https://wiki.libsdl.org/SDL3/SDL_SetGamepadLED)
 func (gp *Gamepad) SetLED(r, g, b uint8) error {
 	ret := C.SDL_SetGamepadLED(gp.cptr(), C.Uint8(r), C.Uint8(g), C.Uint8(b))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -746,7 +758,7 @@ func (gp *Gamepad) SetLED(r, g, b uint8) error {
 func (g *Gamepad) SendEffect(data []byte) error {
 	dataPtr := unsafe.Pointer(unsafe.SliceData(data))
 	ret := C.SDL_SendGamepadEffect(g.cptr(), dataPtr, C.int(len(data)))
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil

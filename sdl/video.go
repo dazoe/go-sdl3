@@ -148,7 +148,7 @@ type EGLIntArrayCallback C.SDL_EGLIntArrayCallback
 
 // An enumeration of OpenGL configuration attributes.
 // (https://wiki.libsdl.org/SDL3/SDL_GLattr)
-type GLAttr C.SDL_GLattr
+type GLAttr C.SDL_GLAttr
 
 const (
 	GL_RED_SIZE                   = GLAttr(C.SDL_GL_RED_SIZE)
@@ -183,7 +183,7 @@ const (
 
 // Possible values to be set for the SDL_GL_CONTEXT_PROFILE_MASK attribute.
 // (https://wiki.libsdl.org/SDL3/SDL_GLprofile)
-type GLProfile C.SDL_GLprofile
+type GLProfile C.SDL_GLProfile
 
 const (
 	GL_CONTEXT_PROFILE_CORE          = GLProfile(C.SDL_GL_CONTEXT_PROFILE_CORE)
@@ -193,7 +193,7 @@ const (
 
 // Possible values to be set for the SDL_GL_CONTEXT_FLAGS attribute.
 // (https://wiki.libsdl.org/SDL3/SDL_GLcontextFlag)
-type GLContextFlag C.SDL_GLcontextFlag
+type GLContextFlag C.SDL_GLContextFlag
 
 const (
 	GL_CONTEXT_DEBUG_FLAG              = GLContextFlag(C.SDL_GL_CONTEXT_DEBUG_FLAG)
@@ -204,7 +204,7 @@ const (
 
 // Possible values to be set for the SDL_GL_CONTEXT_RELEASE_BEHAVIOR
 // (https://wiki.libsdl.org/SDL3/SDL_GLcontextReleaseFlag)
-type GLContextReleaseFlag C.SDL_GLcontextReleaseFlag
+type GLContextReleaseFlag C.SDL_GLContextReleaseFlag
 
 const (
 	GL_CONTEXT_RELEASE_BEHAVIOR_NONE  = GLContextReleaseFlag(C.SDL_GL_CONTEXT_RELEASE_BEHAVIOR_NONE)
@@ -305,7 +305,7 @@ func (displayID DisplayID) GetName() (name string, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetDisplayBounds)
 func (displayID DisplayID) GetBounds() (rect Rect, err error) {
 	ret := C.SDL_GetDisplayBounds(C.SDL_DisplayID(displayID), rect.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -316,7 +316,7 @@ func (displayID DisplayID) GetBounds() (rect Rect, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetDisplayUsableBounds)
 func (displayID DisplayID) GetUsableBounds() (rect Rect, err error) {
 	ret := C.SDL_GetDisplayUsableBounds(C.SDL_DisplayID(displayID), rect.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -367,8 +367,8 @@ func (displayID DisplayID) GetFullscreenModes() ([]DisplayMode, error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetClosestFullscreenDisplayMode)
 func (displayID DisplayID) GetClosestFullscreenMode(w, h int32, refresh_rate float32, include_high_density_modes bool) (mode DisplayMode, err error) {
 	ret := C.SDL_GetClosestFullscreenDisplayMode(
-		displayID.c(), C.int(w), C.int(h), C.float(refresh_rate), sdlBool(include_high_density_modes), mode.cptr())
-	if ret < 0 {
+		displayID.c(), C.int(w), C.int(h), C.float(refresh_rate), (C.bool)(include_high_density_modes), mode.cptr())
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -447,7 +447,7 @@ func (window *Window) GetDisplayScale() (f float32, err error) {
 // Set the display mode to use when a window is visible and fullscreen.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowFullscreenMode)
 func (window *Window) SetFullscreenMode(mode *DisplayMode) error {
-	if C.SDL_SetWindowFullscreenMode(window.cptr(), mode.cptr()) != 0 {
+	if !C.SDL_SetWindowFullscreenMode(window.cptr(), mode.cptr()) {
 		return GetError()
 	}
 	return nil
@@ -648,7 +648,7 @@ func (window *Window) GetFlags() WindowFlags {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowTitle)
 func (window *Window) SetTitle(title string) (err error) {
 	ret := C.SDL_SetWindowTitle(window.cptr(), C.CString(title))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -664,7 +664,7 @@ func (window *Window) GetTitle() string {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowIcon)
 func (window *Window) SetIcon(icon *Surface) (err error) {
 	ret := C.SDL_SetWindowIcon(window.cptr(), icon.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -674,7 +674,7 @@ func (window *Window) SetIcon(icon *Surface) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowPosition)
 func (window *Window) SetPosition(x, y int32) (err error) {
 	ret := C.SDL_SetWindowPosition(window.cptr(), C.int(x), C.int(y))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -684,7 +684,7 @@ func (window *Window) SetPosition(x, y int32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowPosition)
 func (window *Window) GetPosition() (x, y int32, err error) {
 	ret := C.SDL_GetWindowPosition(window.cptr(), (*C.int)(&x), (*C.int)(&y))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -694,7 +694,7 @@ func (window *Window) GetPosition() (x, y int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowSize)
 func (window *Window) SetSize(w, h int32) (err error) {
 	ret := C.SDL_SetWindowSize(window.cptr(), C.int(w), C.int(h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -704,7 +704,7 @@ func (window *Window) SetSize(w, h int32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowSize)
 func (window *Window) GetSize() (w, h int32, err error) {
 	ret := C.SDL_GetWindowSize(window.cptr(), (*C.int)(&w), (*C.int)(&h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -714,7 +714,7 @@ func (window *Window) GetSize() (w, h int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowAspectRatio)
 func (window *Window) SetAspectRatio(min_aspect, max_aspect float32) (err error) {
 	ret := C.SDL_SetWindowAspectRatio(window.cptr(), C.float(min_aspect), C.float(max_aspect))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -724,7 +724,7 @@ func (window *Window) SetAspectRatio(min_aspect, max_aspect float32) (err error)
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowAspectRatio)
 func (window *Window) GetAspectRatio() (min_aspect, max_aspect float32, err error) {
 	ret := C.SDL_GetWindowAspectRatio(window.cptr(), (*C.float)(&min_aspect), (*C.float)(&max_aspect))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -735,7 +735,7 @@ func (window *Window) GetAspectRatio() (min_aspect, max_aspect float32, err erro
 func (window *Window) GetBordersSize() (top, left, bottom, right int32, err error) {
 	ret := C.SDL_GetWindowBordersSize(window.cptr(), (*C.int)(&top), (*C.int)(&left),
 		(*C.int)(&bottom), (*C.int)(&right))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -745,7 +745,7 @@ func (window *Window) GetBordersSize() (top, left, bottom, right int32, err erro
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowSizeInPixels)
 func (window *Window) GetSizeInPixels() (w, h int32, err error) {
 	ret := C.SDL_GetWindowSizeInPixels(window.cptr(), (*C.int)(&w), (*C.int)(&h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -755,7 +755,7 @@ func (window *Window) GetSizeInPixels() (w, h int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowMinimumSize)
 func (window *Window) SetMinimumSize(min_w, min_h int32) (err error) {
 	ret := C.SDL_SetWindowMinimumSize(window.cptr(), C.int(min_w), C.int(min_h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -765,7 +765,7 @@ func (window *Window) SetMinimumSize(min_w, min_h int32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowMinimumSize)
 func (window *Window) GetMinimumSize() (w, h int32, err error) {
 	ret := C.SDL_GetWindowMinimumSize(window.cptr(), (*C.int)(&w), (*C.int)(&h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -775,7 +775,7 @@ func (window *Window) GetMinimumSize() (w, h int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowMaximumSize)
 func (window *Window) SetMaximumSize(max_w, max_h int32) (err error) {
 	ret := C.SDL_SetWindowMaximumSize(window.cptr(), C.int(max_w), C.int(max_h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -785,7 +785,7 @@ func (window *Window) SetMaximumSize(max_w, max_h int32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowMaximumSize)
 func (window *Window) GetMaximumSize() (w, h int32, err error) {
 	ret := C.SDL_GetWindowMaximumSize(window.cptr(), (*C.int)(&w), (*C.int)(&h))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -794,8 +794,8 @@ func (window *Window) GetMaximumSize() (w, h int32, err error) {
 // Set the border state of a window.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowBordered)
 func (window *Window) SetBordered(bordered bool) (err error) {
-	ret := C.SDL_SetWindowBordered(window.cptr(), sdlBool(bordered))
-	if ret != 0 {
+	ret := C.SDL_SetWindowBordered(window.cptr(), (C.bool)(bordered))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -804,8 +804,8 @@ func (window *Window) SetBordered(bordered bool) (err error) {
 // Set the user-resizable state of a window.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowResizable)
 func (window *Window) SetResizable(resizable bool) (err error) {
-	ret := C.SDL_SetWindowResizable(window.cptr(), sdlBool(resizable))
-	if ret != 0 {
+	ret := C.SDL_SetWindowResizable(window.cptr(), (C.bool)(resizable))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -814,8 +814,8 @@ func (window *Window) SetResizable(resizable bool) (err error) {
 // Set the window to always be above the others.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowAlwaysOnTop)
 func (window *Window) SetAlwaysOnTop(on_top bool) (err error) {
-	ret := C.SDL_SetWindowAlwaysOnTop(window.cptr(), sdlBool(on_top))
-	if ret != 0 {
+	ret := C.SDL_SetWindowAlwaysOnTop(window.cptr(), (C.bool)(on_top))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -825,7 +825,7 @@ func (window *Window) SetAlwaysOnTop(on_top bool) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_ShowWindow)
 func (window *Window) Show() (err error) {
 	ret := C.SDL_ShowWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -835,7 +835,7 @@ func (window *Window) Show() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_HideWindow)
 func (window *Window) Hide() (err error) {
 	ret := C.SDL_HideWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -846,7 +846,7 @@ func (window *Window) Hide() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_RaiseWindow)
 func (window *Window) Raise() (err error) {
 	ret := C.SDL_RaiseWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -856,7 +856,7 @@ func (window *Window) Raise() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_MaximizeWindow)
 func (window *Window) Maximize() (err error) {
 	ret := C.SDL_MaximizeWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -866,7 +866,7 @@ func (window *Window) Maximize() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_MinimizeWindow)
 func (window *Window) Minimize() (err error) {
 	ret := C.SDL_MinimizeWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -877,7 +877,7 @@ func (window *Window) Minimize() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_RestoreWindow)
 func (window *Window) Restore() (err error) {
 	ret := C.SDL_RestoreWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -886,8 +886,8 @@ func (window *Window) Restore() (err error) {
 // Request that the window's fullscreen state be changed.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowFullscreen)
 func (window *Window) SetFullscreen(fullscreen bool) (err error) {
-	ret := C.SDL_SetWindowFullscreen(window.cptr(), sdlBool(fullscreen))
-	if ret != 0 {
+	ret := C.SDL_SetWindowFullscreen(window.cptr(), (C.bool)(fullscreen))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -897,7 +897,7 @@ func (window *Window) SetFullscreen(fullscreen bool) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SyncWindow)
 func (window *Window) Sync() (err error) {
 	ret := C.SDL_SyncWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -906,7 +906,7 @@ func (window *Window) Sync() (err error) {
 // Return whether the window has a surface associated with it.
 // (https://wiki.libsdl.org/SDL3/SDL_WindowHasSurface)
 func (window *Window) HasSurface() bool {
-	return C.SDL_WindowHasSurface(window.cptr()) != 0
+	return bool(C.SDL_WindowHasSurface(window.cptr()))
 }
 
 // Get the SDL surface associated with the window.
@@ -923,7 +923,7 @@ func (window *Window) GetSurface() (surface *Surface, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowSurfaceVSync)
 func (window *Window) SetSurfaceVSync(vsync int32) (err error) {
 	ret := C.SDL_SetWindowSurfaceVSync(window.cptr(), C.int(vsync))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -936,7 +936,7 @@ const SDL_WINDOW_SURFACE_VSYNC_ADAPTIVE = (-1)
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowSurfaceVSync)
 func (window *Window) GetSurfaceVSync() (vsync int32, err error) {
 	ret := C.SDL_GetWindowSurfaceVSync(window.cptr(), (*C.int)(&vsync))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -946,7 +946,7 @@ func (window *Window) GetSurfaceVSync() (vsync int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_UpdateWindowSurface)
 func (window *Window) UpdateSurface() (err error) {
 	ret := C.SDL_UpdateWindowSurface(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -956,7 +956,7 @@ func (window *Window) UpdateSurface() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_UpdateWindowSurfaceRects)
 func (window *Window) UpdateSurfaceRects(rects []Rect) (err error) {
 	ret := C.SDL_UpdateWindowSurfaceRects(window.cptr(), rects[0].cptr(), C.int(len(rects)))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -966,7 +966,7 @@ func (window *Window) UpdateSurfaceRects(rects []Rect) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_DestroyWindowSurface)
 func (window *Window) DestroySurface() (err error) {
 	ret := C.SDL_DestroyWindowSurface(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -975,8 +975,8 @@ func (window *Window) DestroySurface() (err error) {
 // Set a window's keyboard grab mode.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowKeyboardGrab)
 func (window *Window) SetKeyboardGrab(grabbed bool) (err error) {
-	ret := C.SDL_SetWindowKeyboardGrab(window.cptr(), sdlBool(grabbed))
-	if ret != 0 {
+	ret := C.SDL_SetWindowKeyboardGrab(window.cptr(), (C.bool)(grabbed))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -985,8 +985,8 @@ func (window *Window) SetKeyboardGrab(grabbed bool) (err error) {
 // Set a window's mouse grab mode.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowMouseGrab)
 func (window *Window) SetMouseGrab(grabbed bool) (err error) {
-	ret := C.SDL_SetWindowMouseGrab(window.cptr(), sdlBool(grabbed))
-	if ret != 0 {
+	ret := C.SDL_SetWindowMouseGrab(window.cptr(), (C.bool)(grabbed))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -995,13 +995,13 @@ func (window *Window) SetMouseGrab(grabbed bool) (err error) {
 // Get a window's keyboard grab mode.
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowKeyboardGrab)
 func (window *Window) GetKeyboardGrab() bool {
-	return C.SDL_GetWindowKeyboardGrab(window.cptr()) != 0
+	return bool(C.SDL_GetWindowKeyboardGrab(window.cptr()))
 }
 
 // Get a window's mouse grab mode.
 // (https://wiki.libsdl.org/SDL3/SDL_GetWindowMouseGrab)
 func (window *Window) GetMouseGrab() bool {
-	return C.SDL_GetWindowMouseGrab(window.cptr()) != 0
+	return bool(C.SDL_GetWindowMouseGrab(window.cptr()))
 }
 
 // Get the window that currently has an input grab enabled.
@@ -1014,7 +1014,7 @@ func GetGrabbedWindow() *Window {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowMouseRect)
 func (window *Window) SetMouseRect(rect Rect) (err error) {
 	ret := C.SDL_SetWindowMouseRect(window.cptr(), rect.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1030,7 +1030,7 @@ func (window *Window) GetMouseRect() *Rect {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowOpacity)
 func (window *Window) SetOpacity(opacity float32) (err error) {
 	ret := C.SDL_SetWindowOpacity(window.cptr(), C.float(opacity))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1046,21 +1046,22 @@ func (window *Window) GetOpacity() (opacity float32, err error) {
 	return
 }
 
-// Set the window as a modal to a parent window.
-// (https://wiki.libsdl.org/SDL3/SDL_SetWindowModalFor)
-func (modal_window *Window) SetModalFor(parent_window *Window) (err error) {
-	ret := C.SDL_SetWindowModalFor(modal_window.cptr(), parent_window.cptr())
-	if ret != 0 {
-		err = GetError()
-	}
-	return
-}
+// TODO: * SDL_SetWindowModalFor() - use SDL_SetWindowParent() with SDL_SetWindowModal() instead
+// // Set the window as a modal to a parent window.
+// // (https://wiki.libsdl.org/SDL3/SDL_SetWindowModalFor)
+// func (modal_window *Window) SetModalFor(parent_window *Window) (err error) {
+// 	ret := C.SDL_SetWindowModalFor(modal_window.cptr(), parent_window.cptr())
+// 	if !ret {
+// 		err = GetError()
+// 	}
+// 	return
+// }
 
 // Set whether the window may have input focus.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowFocusable)
 func (window *Window) SetFocusable(focusable bool) (err error) {
-	ret := C.SDL_SetWindowFocusable(window.cptr(), sdlBool(focusable))
-	if ret != 0 {
+	ret := C.SDL_SetWindowFocusable(window.cptr(), (C.bool)(focusable))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1070,7 +1071,7 @@ func (window *Window) SetFocusable(focusable bool) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_ShowWindowSystemMenu)
 func (window *Window) ShowSystemMenu(x, y int32) (err error) {
 	ret := C.SDL_ShowWindowSystemMenu(window.cptr(), C.int(x), C.int(y))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1120,7 +1121,7 @@ func goHitTestCallback(window *C.SDL_Window, area *C.SDL_Point) C.SDL_HitTestRes
 func (window *Window) SetHitTest(callback HitTestCallback, data any) error {
 	windowHitTestCallbacks[window] = hitTestCallbackData{callback: callback, data: data}
 	ret := C.SDL_SetWindowHitTest(window.cptr(), C.SDL_HitTest(C.cgoHitTestCallback), nil)
-	if ret < 0 {
+	if !ret {
 		return GetError()
 	}
 	return nil
@@ -1130,7 +1131,7 @@ func (window *Window) SetHitTest(callback HitTestCallback, data any) error {
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowShape)
 func (window *Window) SetShape(shape *Surface) (err error) {
 	ret := C.SDL_SetWindowShape(window.cptr(), shape.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1140,7 +1141,7 @@ func (window *Window) SetShape(shape *Surface) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_FlashWindow)
 func (window *Window) Flash(operation FlashOperation) (err error) {
 	ret := C.SDL_FlashWindow(window.cptr(), C.SDL_FlashOperation(operation))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1155,14 +1156,14 @@ func (window *Window) Destroy() {
 // Check whether the screensaver is currently enabled.
 // (https://wiki.libsdl.org/SDL3/SDL_ScreenSaverEnabled)
 func ScreenSaverEnabled() bool {
-	return C.SDL_ScreenSaverEnabled() != 0
+	return bool(C.SDL_ScreenSaverEnabled())
 }
 
 // Allow the screen to be blanked by a screen saver.
 // (https://wiki.libsdl.org/SDL3/SDL_EnableScreenSaver)
 func EnableScreenSaver() (err error) {
 	ret := C.SDL_EnableScreenSaver()
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1172,7 +1173,7 @@ func EnableScreenSaver() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_DisableScreenSaver)
 func DisableScreenSaver() (err error) {
 	ret := C.SDL_DisableScreenSaver()
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1188,7 +1189,7 @@ func GL_LoadLibrary(path string) (err error) {
 		cPath = C.CString(path)
 	}
 	ret := C.SDL_GL_LoadLibrary(cPath)
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1215,7 +1216,7 @@ func GL_UnloadLibrary() {
 // Check if an OpenGL extension is supported for the current context.
 // (https://wiki.libsdl.org/SDL3/SDL_GL_ExtensionSupported)
 func GL_ExtensionSupported(extension string) bool {
-	return C.SDL_GL_ExtensionSupported(C.CString(extension)) != 0
+	return bool(C.SDL_GL_ExtensionSupported(C.CString(extension)))
 }
 
 // Reset all previously set OpenGL context attributes to their default values.
@@ -1227,8 +1228,8 @@ func GL_ResetAttributes() {
 // Set an OpenGL window attribute before window creation.
 // (https://wiki.libsdl.org/SDL3/SDL_GL_SetAttribute)
 func GL_SetAttribute(attr GLAttr, value int32) (err error) {
-	ret := C.SDL_GL_SetAttribute(C.SDL_GLattr(attr), C.int(value))
-	if ret != 0 {
+	ret := C.SDL_GL_SetAttribute(C.SDL_GLAttr(attr), C.int(value))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1237,8 +1238,8 @@ func GL_SetAttribute(attr GLAttr, value int32) (err error) {
 // Get the actual value for an attribute from the current context.
 // (https://wiki.libsdl.org/SDL3/SDL_GL_GetAttribute)
 func GL_GetAttribute(attr GLAttr) (value int32, err error) {
-	ret := C.SDL_GL_GetAttribute(C.SDL_GLattr(attr), (*C.int)(&value))
-	if ret != 0 {
+	ret := C.SDL_GL_GetAttribute(C.SDL_GLAttr(attr), (*C.int)(&value))
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1258,7 +1259,7 @@ func (window *Window) GL_CreateContext() (ctx GLContext, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GL_MakeCurrent)
 func (window *Window) GL_MakeCurrent(context GLContext) (err error) {
 	ret := C.SDL_GL_MakeCurrent(window.cptr(), C.SDL_GLContext(context))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1319,17 +1320,17 @@ func (window *Window) EGL_GetWindowSurface() (surface EGLSurface, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_EGL_SetAttributeCallbacks)
 func EGL_SetEGLAttributeCallbacks(platformAttribCallback EGLAttribArrayCallback,
 	surfaceAttribCallback,
-	contextAttribCallback EGLIntArrayCallback) {
+	contextAttribCallback EGLIntArrayCallback, useradata unsafe.Pointer) {
 	C.SDL_EGL_SetAttributeCallbacks(
 		C.SDL_EGLAttribArrayCallback(platformAttribCallback), C.SDL_EGLIntArrayCallback(surfaceAttribCallback),
-		C.SDL_EGLIntArrayCallback(contextAttribCallback))
+		C.SDL_EGLIntArrayCallback(contextAttribCallback), useradata)
 }
 
 // Set the swap interval for the current OpenGL context.
 // (https://wiki.libsdl.org/SDL3/SDL_GL_SetSwapInterval)
 func GL_SetSwapInterval(interval int32) (err error) {
 	ret := C.SDL_GL_SetSwapInterval(C.int(interval))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1339,7 +1340,7 @@ func GL_SetSwapInterval(interval int32) (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GL_GetSwapInterval)
 func GL_GetSwapInterval() (interval int32, err error) {
 	ret := C.SDL_GL_GetSwapInterval((*C.int)(&interval))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1349,7 +1350,7 @@ func GL_GetSwapInterval() (interval int32, err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GL_SwapWindow)
 func (window *Window) GL_SwapWindow() (err error) {
 	ret := C.SDL_GL_SwapWindow(window.cptr())
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return
@@ -1359,7 +1360,7 @@ func (window *Window) GL_SwapWindow() (err error) {
 // (https://wiki.libsdl.org/SDL3/SDL_GL_DestroyContext)
 func GL_DestroyContext(context GLContext) (err error) {
 	ret := C.SDL_GL_DestroyContext(C.SDL_GLContext(context))
-	if ret != 0 {
+	if !ret {
 		err = GetError()
 	}
 	return

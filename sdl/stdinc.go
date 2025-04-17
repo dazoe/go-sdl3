@@ -3,7 +3,8 @@ package sdl
 //#include<SDL3/SDL_stdinc.h>
 import "C"
 
-//TODO incomplete
+// TODO incomplete
+type Time int64
 
 // For some reason C.SDL_FLT_EPSILON evaluated to 0.0 it should be
 const FLT_EPSILON = 1.1920928955078125e-07
