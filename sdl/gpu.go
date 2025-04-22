@@ -1334,7 +1334,7 @@ func (commandBuffer *GPUCommandBuffer) PushComputeUniformData(slotIndex uint32, 
 // Begins a render pass on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_BeginGPURenderPass)
 func (commandBuffer *GPUCommandBuffer) BeginRenderPass(
-	colorTargetInfos []GPUColorTargetInfo, depthStencilTargetInfo *GPUDepthStencilTargetInfo) (*GPURenderPass, error) {
+	colorTargetInfos []GPUColorTargetInfo, depthStencilTargetInfo *GPUDepthStencilTargetInfo) *GPURenderPass {
 
 	data := (*C.SDL_GPUColorTargetInfo)(unsafe.Pointer(unsafe.SliceData(colorTargetInfos)))
 	dataLen := C.Uint32(len(colorTargetInfos))
@@ -1342,10 +1342,7 @@ func (commandBuffer *GPUCommandBuffer) BeginRenderPass(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		data, dataLen,
 		(*C.SDL_GPUDepthStencilTargetInfo)(unsafe.Pointer(depthStencilTargetInfo)))
-	if ret == nil {
-		return nil, GetError()
-	}
-	return (*GPURenderPass)(ret), nil
+	return (*GPURenderPass)(ret)
 }
 
 // Binds a graphics pipeline on a render pass to be used in rendering.
@@ -1791,13 +1788,43 @@ func (commandBuffer *GPUCommandBuffer) AcquireSwapchainTexture(window *Window) (
 	ret := C.SDL_AcquireGPUSwapchainTexture(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		(*C.SDL_Window)(window),
-		(**C.SDL_GPUTexture)(unsafe.Pointer(texture)),
+		(**C.SDL_GPUTexture)(unsafe.Pointer(&texture)),
 		(*C.Uint32)(unsafe.Pointer(&swapchainTextureWidth)),
 		(*C.Uint32)(unsafe.Pointer(&swapchainTextureHeight)))
 	if !ret {
 		return nil, 0, 0, GetError()
 	}
 	return texture, swapchainTextureWidth, swapchainTextureHeight, nil
+}
+
+// Blocks the thread until a swapchain texture is available to be acquired.
+// (https://wiki.libsdl.org/SDL3/SDL_WaitForGPUSwapchain)
+func (device *GPUDevice) WaitForSwapchain(window *Window) error {
+	ret := C.SDL_WaitForGPUSwapchain((*C.SDL_GPUDevice)(device), (*C.SDL_Window)(window))
+	if !ret {
+		return GetError()
+	}
+	return nil
+}
+
+// Blocks the thread until a swapchain texture is available to be acquired,
+// and then acquires it.
+// (https://wiki.libsdl.org/SDL3/SDL_WaitAndAcquireGPUSwapchainTexture)
+func (commandBuffer *GPUCommandBuffer) WaitAndAcquireSwapchainTexture(window *Window) (*GPUTexture, uint32, uint32, error) {
+	var texture *GPUTexture
+	var width uint32
+	var height uint32
+
+	ret := C.SDL_WaitAndAcquireGPUSwapchainTexture(
+		(*C.SDL_GPUCommandBuffer)(commandBuffer),
+		(*C.SDL_Window)(window),
+		(**C.SDL_GPUTexture)(unsafe.Pointer(&texture)),
+		(*C.Uint32)(unsafe.Pointer(&width)),
+		(*C.Uint32)(unsafe.Pointer(&height)))
+	if !ret {
+		return nil, 0, 0, GetError()
+	}
+	return texture, width, height, nil
 }
 
 // Submits a command buffer so its commands can be processed on the GPU.
