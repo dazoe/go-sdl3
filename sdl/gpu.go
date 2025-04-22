@@ -1060,8 +1060,8 @@ const (
 
 // Destroys a GPU context previously returned by SDL_CreateGPUDevice.
 // (https://wiki.libsdl.org/SDL3/SDL_DestroyGPUDevice)
-func DestroyGPUDevice(device *GPUDevice) {
-	C.SDL_DestroyGPUDevice((*C.SDL_GPUDevice)(device))
+func (dev *GPUDevice) Destroy() {
+	C.SDL_DestroyGPUDevice((*C.SDL_GPUDevice)(dev))
 }
 
 // Get the number of GPU drivers compiled into SDL.
@@ -1093,7 +1093,7 @@ func (dev *GPUDevice) GetShaderFormats() GPUShaderFormat {
 // TODO: needs tested
 // Creates a pipeline object to be used in a compute workflow.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateGPUComputePipeline)
-func (dev *GPUDevice) CreateGPUComputePipeline(createinfo *GPUComputePipelineCreateInfo) (*GPUComputePipeline, error) {
+func (dev *GPUDevice) CreateComputePipeline(createinfo *GPUComputePipelineCreateInfo) (*GPUComputePipeline, error) {
 	var cCreateInfo *C.SDL_GPUComputePipelineCreateInfo
 	if createinfo != nil {
 		// TODO: can I pass the code directly like this or do i need to make a copy?
@@ -1124,7 +1124,7 @@ func (dev *GPUDevice) CreateGPUComputePipeline(createinfo *GPUComputePipelineCre
 
 // Creates a pipeline object to be used in a graphics workflow.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateGPUGraphicsPipeline)
-func (dev *GPUDevice) CreateGPUGraphicsPipeline(createinfo *GPUGraphicsPipelineCreateInfo) (*GPUGraphicsPipeline, error) {
+func (dev *GPUDevice) CreateGraphicsPipeline(createinfo *GPUGraphicsPipelineCreateInfo) (*GPUGraphicsPipeline, error) {
 	cCreateInfo := (*C.SDL_GPUGraphicsPipelineCreateInfo)(unsafe.Pointer(createinfo))
 	ret := C.SDL_CreateGPUGraphicsPipeline((*C.SDL_GPUDevice)(dev), cCreateInfo)
 	if ret == nil {
@@ -1136,7 +1136,7 @@ func (dev *GPUDevice) CreateGPUGraphicsPipeline(createinfo *GPUGraphicsPipelineC
 // Creates a sampler object to be used when binding textures in a graphics
 // workflow.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateGPUSampler)
-func (dev *GPUDevice) CreateGPUSampler(createinfo *GPUSamplerCreateInfo) (*GPUSampler, error) {
+func (dev *GPUDevice) CreateSampler(createinfo *GPUSamplerCreateInfo) (*GPUSampler, error) {
 	cCreateInfo := (*C.SDL_GPUSamplerCreateInfo)(unsafe.Pointer(createinfo))
 	ret := C.SDL_CreateGPUSampler((*C.SDL_GPUDevice)(dev), cCreateInfo)
 	if ret == nil {
@@ -1148,7 +1148,7 @@ func (dev *GPUDevice) CreateGPUSampler(createinfo *GPUSamplerCreateInfo) (*GPUSa
 // TODO: needs tested
 // Creates a shader to be used when creating a graphics pipeline.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateGPUShader)
-func (dev *GPUDevice) CreateGPUShader(createinfo *GPUShaderCreateInfo) (*GPUShader, error) {
+func (dev *GPUDevice) CreateShader(createinfo *GPUShaderCreateInfo) (*GPUShader, error) {
 	var cCreateInfo *C.SDL_GPUShaderCreateInfo
 	if createinfo != nil {
 		// TODO: can I pass the code directly like this or do i need to make a copy?
@@ -1175,7 +1175,7 @@ func (dev *GPUDevice) CreateGPUShader(createinfo *GPUShaderCreateInfo) (*GPUShad
 
 // Creates a texture object to be used in graphics or compute workflows.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateGPUTexture)
-func (dev *GPUDevice) CreateGPUTexture(createinfo *GPUTextureCreateInfo) (*GPUTexture, error) {
+func (dev *GPUDevice) CreateTexture(createinfo *GPUTextureCreateInfo) (*GPUTexture, error) {
 	cCreateInfo := (*C.SDL_GPUTextureCreateInfo)(unsafe.Pointer(createinfo))
 	ret := C.SDL_CreateGPUTexture((*C.SDL_GPUDevice)(dev), cCreateInfo)
 	if ret == nil {
@@ -1186,7 +1186,7 @@ func (dev *GPUDevice) CreateGPUTexture(createinfo *GPUTextureCreateInfo) (*GPUTe
 
 // Creates a buffer object to be used in graphics or compute workflows.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateGPUBuffer)
-func (dev *GPUDevice) CreateGPUBuffer(createinfo *GPUBufferCreateInfo) (*GPUBuffer, error) {
+func (dev *GPUDevice) CreateBuffer(createinfo *GPUBufferCreateInfo) (*GPUBuffer, error) {
 	cCreateInfo := (*C.SDL_GPUBufferCreateInfo)(unsafe.Pointer(createinfo))
 	ret := C.SDL_CreateGPUBuffer((*C.SDL_GPUDevice)(dev), cCreateInfo)
 	if ret == nil {
@@ -1198,7 +1198,7 @@ func (dev *GPUDevice) CreateGPUBuffer(createinfo *GPUBufferCreateInfo) (*GPUBuff
 // Creates a transfer buffer to be used when uploading to or downloading from
 // graphics resources.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateGPUTransferBuffer)
-func (dev *GPUDevice) CreateGPUTransferBuffer(createinfo *GPUTransferBufferCreateInfo) (*GPUTransferBuffer, error) {
+func (dev *GPUDevice) CreateTransferBuffer(createinfo *GPUTransferBufferCreateInfo) (*GPUTransferBuffer, error) {
 	cCreateInfo := (*C.SDL_GPUTransferBufferCreateInfo)(unsafe.Pointer(createinfo))
 	ret := C.SDL_CreateGPUTransferBuffer((*C.SDL_GPUDevice)(dev), cCreateInfo)
 	if ret == nil {
@@ -1211,7 +1211,7 @@ func (dev *GPUDevice) CreateGPUTransferBuffer(createinfo *GPUTransferBufferCreat
 
 // Sets an arbitrary string constant to label a buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGPUBufferName)
-func (dev *GPUDevice) SetGPUBufferName(buffer *GPUBuffer, text string) {
+func (dev *GPUDevice) SetBufferName(buffer *GPUBuffer, text string) {
 	cText := C.CString(text)
 	defer C.SDL_free(unsafe.Pointer(cText))
 	C.SDL_SetGPUBufferName((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUBuffer)(buffer), cText)
@@ -1219,7 +1219,7 @@ func (dev *GPUDevice) SetGPUBufferName(buffer *GPUBuffer, text string) {
 
 // Sets an arbitrary string constant to label a texture.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGPUTextureName)
-func (dev *GPUDevice) SetGPUTextureName(texture *GPUTexture, text string) {
+func (dev *GPUDevice) SetTextureName(texture *GPUTexture, text string) {
 	cText := C.CString(text)
 	defer C.SDL_free(unsafe.Pointer(cText))
 	C.SDL_SetGPUTextureName((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUTexture)(texture), cText)
@@ -1227,7 +1227,7 @@ func (dev *GPUDevice) SetGPUTextureName(texture *GPUTexture, text string) {
 
 // Inserts an arbitrary string label into the command buffer callstream.
 // (https://wiki.libsdl.org/SDL3/SDL_InsertGPUDebugLabel)
-func (commandBuffer *GPUCommandBuffer) InsertGPUDebugLabel(text string) {
+func (commandBuffer *GPUCommandBuffer) InsertDebugLabel(text string) {
 	cText := C.CString(text)
 	defer C.SDL_free(unsafe.Pointer(cText))
 	C.SDL_InsertGPUDebugLabel((*C.SDL_GPUCommandBuffer)(commandBuffer), cText)
@@ -1235,7 +1235,7 @@ func (commandBuffer *GPUCommandBuffer) InsertGPUDebugLabel(text string) {
 
 // Begins a debug group with an arbitary name.
 // (https://wiki.libsdl.org/SDL3/SDL_PushGPUDebugGroup)
-func (commandBuffer *GPUCommandBuffer) PushGPUDebugGroup(text string) {
+func (commandBuffer *GPUCommandBuffer) PushDebugGroup(text string) {
 	cText := C.CString(text)
 	defer C.SDL_free(unsafe.Pointer(cText))
 	C.SDL_PushGPUDebugGroup((*C.SDL_GPUCommandBuffer)(commandBuffer), cText)
@@ -1243,7 +1243,7 @@ func (commandBuffer *GPUCommandBuffer) PushGPUDebugGroup(text string) {
 
 // Ends the most-recently pushed debug group.
 // (https://wiki.libsdl.org/SDL3/SDL_PopGPUDebugGroup)
-func (commandBuffer *GPUCommandBuffer) PopGPUDebugGroup() {
+func (commandBuffer *GPUCommandBuffer) PopDebugGroup() {
 	C.SDL_PopGPUDebugGroup((*C.SDL_GPUCommandBuffer)(commandBuffer))
 }
 
@@ -1251,49 +1251,49 @@ func (commandBuffer *GPUCommandBuffer) PopGPUDebugGroup() {
 
 // Frees the given texture as soon as it is safe to do so.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUTexture)
-func (dev *GPUDevice) ReleaseGPUTexture(texture *GPUTexture) {
+func (dev *GPUDevice) ReleaseTexture(texture *GPUTexture) {
 	C.SDL_ReleaseGPUTexture((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUTexture)(texture))
 }
 
 // Frees the given sampler as soon as it is safe to do so.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUSampler)
-func (dev *GPUDevice) ReleaseGPUSampler(sampler *GPUSampler) {
+func (dev *GPUDevice) ReleaseSampler(sampler *GPUSampler) {
 	C.SDL_ReleaseGPUSampler((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUSampler)(sampler))
 }
 
 // Frees the given buffer as soon as it is safe to do so.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUBuffer)
-func (dev *GPUDevice) ReleaseGPUBuffer(buffer *GPUBuffer) {
+func (dev *GPUDevice) ReleaseBuffer(buffer *GPUBuffer) {
 	C.SDL_ReleaseGPUBuffer((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUBuffer)(buffer))
 }
 
 // Frees the given transfer buffer as soon as it is safe to do so.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUTransferBuffer)
-func (dev *GPUDevice) ReleaseGPUTransferBuffer(transferBuffer *GPUTransferBuffer) {
+func (dev *GPUDevice) ReleaseTransferBuffer(transferBuffer *GPUTransferBuffer) {
 	C.SDL_ReleaseGPUTransferBuffer((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUTransferBuffer)(transferBuffer))
 }
 
 // Frees the given compute pipeline as soon as it is safe to do so.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUComputePipeline)
-func (dev *GPUDevice) ReleaseGPUComputePipeline(computePipeline *GPUComputePipeline) {
+func (dev *GPUDevice) ReleaseComputePipeline(computePipeline *GPUComputePipeline) {
 	C.SDL_ReleaseGPUComputePipeline((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUComputePipeline)(computePipeline))
 }
 
 // Frees the given shader as soon as it is safe to do so.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUShader)
-func (dev *GPUDevice) ReleaseGPUShader(shader *GPUShader) {
+func (dev *GPUDevice) ReleaseShader(shader *GPUShader) {
 	C.SDL_ReleaseGPUShader((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUShader)(shader))
 }
 
 // Frees the given graphics pipeline as soon as it is safe to do so.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUGraphicsPipeline)
-func (dev *GPUDevice) ReleaseGPUGraphicsPipeline(graphicsPipeline *GPUGraphicsPipeline) {
+func (dev *GPUDevice) ReleaseGraphicsPipeline(graphicsPipeline *GPUGraphicsPipeline) {
 	C.SDL_ReleaseGPUGraphicsPipeline((*C.SDL_GPUDevice)(dev), (*C.SDL_GPUGraphicsPipeline)(graphicsPipeline))
 }
 
 // Acquire a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_AcquireGPUCommandBuffer)
-func (dev *GPUDevice) AcquireGPUCommandBuffer() (*GPUCommandBuffer, error) {
+func (dev *GPUDevice) AcquireCommandBuffer() (*GPUCommandBuffer, error) {
 	ret := C.SDL_AcquireGPUCommandBuffer((*C.SDL_GPUDevice)(dev))
 	if ret == nil {
 		return nil, GetError()
@@ -1305,7 +1305,7 @@ func (dev *GPUDevice) AcquireGPUCommandBuffer() (*GPUCommandBuffer, error) {
 
 // Pushes data to a vertex uniform slot on the command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_PushGPUVertexUniformData)
-func (commandBuffer *GPUCommandBuffer) PushGPUVertexUniformData(slotIndex uint32, data []byte) {
+func (commandBuffer *GPUCommandBuffer) PushVertexUniformData(slotIndex uint32, data []byte) {
 	C.SDL_PushGPUVertexUniformData(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		C.Uint32(slotIndex), unsafe.Pointer(&data[0]), C.Uint32(len(data)))
@@ -1313,7 +1313,7 @@ func (commandBuffer *GPUCommandBuffer) PushGPUVertexUniformData(slotIndex uint32
 
 // Pushes data to a fragment uniform slot on the command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_PushGPUFragmentUniformData)
-func (commandBuffer *GPUCommandBuffer) PushGPUFragmentUniformData(slotIndex uint32, data []byte) {
+func (commandBuffer *GPUCommandBuffer) PushFragmentUniformData(slotIndex uint32, data []byte) {
 	C.SDL_PushGPUFragmentUniformData(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		C.Uint32(slotIndex), unsafe.Pointer(&data[0]), C.Uint32(len(data)))
@@ -1321,7 +1321,7 @@ func (commandBuffer *GPUCommandBuffer) PushGPUFragmentUniformData(slotIndex uint
 
 // Pushes data to a uniform slot on the command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_PushGPUComputeUniformData)
-func (commandBuffer *GPUCommandBuffer) PushGPUComputeUniformData(slotIndex uint32, data []byte) {
+func (commandBuffer *GPUCommandBuffer) PushComputeUniformData(slotIndex uint32, data []byte) {
 	C.SDL_PushGPUComputeUniformData(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		C.Uint32(slotIndex), unsafe.Pointer(&data[0]), C.Uint32(len(data)))
@@ -1333,7 +1333,7 @@ func (commandBuffer *GPUCommandBuffer) PushGPUComputeUniformData(slotIndex uint3
 
 // Begins a render pass on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_BeginGPURenderPass)
-func (commandBuffer *GPUCommandBuffer) BeginGPURenderPass(
+func (commandBuffer *GPUCommandBuffer) BeginRenderPass(
 	colorTargetInfos []GPUColorTargetInfo, depthStencilTargetInfo *GPUDepthStencilTargetInfo) (*GPURenderPass, error) {
 
 	data := (*C.SDL_GPUColorTargetInfo)(unsafe.Pointer(unsafe.SliceData(colorTargetInfos)))
@@ -1350,39 +1350,39 @@ func (commandBuffer *GPUCommandBuffer) BeginGPURenderPass(
 
 // Binds a graphics pipeline on a render pass to be used in rendering.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUGraphicsPipeline)
-func (renderPass *GPURenderPass) BindGPUGraphicsPipeline(graphicsPipeline *GPUGraphicsPipeline) {
+func (renderPass *GPURenderPass) BindGraphicsPipeline(graphicsPipeline *GPUGraphicsPipeline) {
 	C.SDL_BindGPUGraphicsPipeline((*C.SDL_GPURenderPass)(renderPass), (*C.SDL_GPUGraphicsPipeline)(graphicsPipeline))
 }
 
 // Sets the current viewport state on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGPUViewport)
-func (renderPass *GPURenderPass) SetGPUViewport(viewport *GPUViewport) {
+func (renderPass *GPURenderPass) SetViewport(viewport *GPUViewport) {
 	C.SDL_SetGPUViewport((*C.SDL_GPURenderPass)(renderPass), (*C.SDL_GPUViewport)(unsafe.Pointer(viewport)))
 }
 
 // Sets the current scissor state on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGPUScissor)
-func (renderPass *GPURenderPass) SetGPUScissor(scissor *Rect) {
+func (renderPass *GPURenderPass) SetScissor(scissor *Rect) {
 	C.SDL_SetGPUScissor((*C.SDL_GPURenderPass)(renderPass), (*C.SDL_Rect)(unsafe.Pointer(scissor)))
 }
 
 // TODO: is there a better way to convert from FColor to SDL_Color?
 // Sets the current blend constants on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGPUBlendConstants)
-func (renderPass *GPURenderPass) SetGPUBlendConstants(blendConstants FColor) {
+func (renderPass *GPURenderPass) SetBlendConstants(blendConstants FColor) {
 	C.SDL_SetGPUBlendConstants((*C.SDL_GPURenderPass)(renderPass), *((*C.SDL_FColor)(unsafe.Pointer(&blendConstants))))
 }
 
 // Sets the current stencil reference value on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGPUStencilReference)
-func (renderPass *GPURenderPass) SetGPUStencilReference(reference uint8) {
+func (renderPass *GPURenderPass) SetStencilReference(reference uint8) {
 	C.SDL_SetGPUStencilReference((*C.SDL_GPURenderPass)(renderPass), C.Uint8(reference))
 }
 
 // Binds vertex buffers on a command buffer for use with subsequent draw
 // calls.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUVertexBuffers)
-func (renderPass *GPURenderPass) BindGPUVertexBuffers(
+func (renderPass *GPURenderPass) BindVertexBuffers(
 	firstSlot uint32, bindings []GPUBufferBinding, indexElementSize GPUIndexElementSize) {
 
 	data := (*C.SDL_GPUBufferBinding)(unsafe.Pointer(unsafe.SliceData(bindings)))
@@ -1395,9 +1395,7 @@ func (renderPass *GPURenderPass) BindGPUVertexBuffers(
 // Binds an index buffer on a command buffer for use with subsequent draw
 // calls.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUIndexBuffer)
-func (renderPass *GPURenderPass) BindGPUIndexBuffer(
-	binding *GPUBufferBinding, indexElementSize GPUIndexElementSize) {
-
+func (renderPass *GPURenderPass) BindIndexBuffer(binding *GPUBufferBinding, indexElementSize GPUIndexElementSize) {
 	C.SDL_BindGPUIndexBuffer(
 		(*C.SDL_GPURenderPass)(renderPass),
 		(*C.SDL_GPUBufferBinding)(unsafe.Pointer(binding)),
@@ -1406,9 +1404,7 @@ func (renderPass *GPURenderPass) BindGPUIndexBuffer(
 
 // Binds texture-sampler pairs for use on the vertex shader.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUVertexSamplers)
-func (renderPass *GPURenderPass) BindGPUVertexSamplers(
-	firstSlot uint32, bindings []GPUTextureSamplerBinding) {
-
+func (renderPass *GPURenderPass) BindVertexSamplers(firstSlot uint32, bindings []GPUTextureSamplerBinding) {
 	data := (*C.SDL_GPUTextureSamplerBinding)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUVertexSamplers(
@@ -1419,9 +1415,7 @@ func (renderPass *GPURenderPass) BindGPUVertexSamplers(
 // TODO: is this right? pointer to pointer?
 // Binds storage textures for use on the vertex shader.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUVertexStorageTextures)
-func (renderPass *GPURenderPass) BindGPUVertexStorageTextures(
-	firstSlot uint32, bindings []GPUTexture) {
-
+func (renderPass *GPURenderPass) BindVertexStorageTextures(firstSlot uint32, bindings []GPUTexture) {
 	data := (*C.SDL_GPUTexture)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUVertexStorageTextures(
@@ -1432,9 +1426,7 @@ func (renderPass *GPURenderPass) BindGPUVertexStorageTextures(
 // TODO: is this right? pointer to pointer?
 // Binds storage buffers for use on the vertex shader.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUVertexStorageBuffers)
-func (renderPass *GPURenderPass) BindGPUVertexStorageBuffers(
-	firstSlot uint32, bindings []GPUBuffer) {
-
+func (renderPass *GPURenderPass) BindVertexStorageBuffers(firstSlot uint32, bindings []GPUBuffer) {
 	data := (*C.SDL_GPUBuffer)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUVertexStorageBuffers(
@@ -1444,9 +1436,7 @@ func (renderPass *GPURenderPass) BindGPUVertexStorageBuffers(
 
 // Binds texture-sampler pairs for use on the fragment shader.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUFragmentSamplers)
-func (renderPass *GPURenderPass) BindGPUFragmentSamplers(
-	firstSlot uint32, bindings []GPUTextureSamplerBinding) {
-
+func (renderPass *GPURenderPass) BindFragmentSamplers(firstSlot uint32, bindings []GPUTextureSamplerBinding) {
 	data := (*C.SDL_GPUTextureSamplerBinding)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUFragmentSamplers(
@@ -1457,9 +1447,7 @@ func (renderPass *GPURenderPass) BindGPUFragmentSamplers(
 // TODO: is this right? pointer to pointer?
 // Binds storage textures for use on the fragment shader.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUFragmentStorageTextures)
-func (renderPass *GPURenderPass) BindGPUFragmentStorageTextures(
-	firstSlot uint32, bindings []GPUTexture) {
-
+func (renderPass *GPURenderPass) BindFragmentStorageTextures(firstSlot uint32, bindings []GPUTexture) {
 	data := (*C.SDL_GPUTexture)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUFragmentStorageTextures(
@@ -1470,9 +1458,7 @@ func (renderPass *GPURenderPass) BindGPUFragmentStorageTextures(
 // TODO: is this right? pointer to pointer?
 // Binds storage buffers for use on the fragment shader.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUFragmentStorageBuffers)
-func (renderPass *GPURenderPass) BindGPUFragmentStorageBuffers(
-	firstSlot uint32, bindings []GPUBuffer) {
-
+func (renderPass *GPURenderPass) BindFragmentStorageBuffers(firstSlot uint32, bindings []GPUBuffer) {
 	data := (*C.SDL_GPUBuffer)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUFragmentStorageBuffers(
@@ -1485,9 +1471,8 @@ func (renderPass *GPURenderPass) BindGPUFragmentStorageBuffers(
 // Draws data using bound graphics state with an index buffer and instancing
 // enabled.
 // (https://wiki.libsdl.org/SDL3/SDL_DrawGPUIndexedPrimitives)
-func (renderPass *GPURenderPass) DrawGPUIndexedPrimitives(
-	numIndices uint32, numInstances uint32, firstIndex uint32,
-	vertexOffset int32, firstInstance uint32) {
+func (renderPass *GPURenderPass) DrawIndexedPrimitives(
+	numIndices uint32, numInstances uint32, firstIndex uint32, vertexOffset int32, firstInstance uint32) {
 
 	C.SDL_DrawGPUIndexedPrimitives(
 		(*C.SDL_GPURenderPass)(renderPass),
@@ -1497,9 +1482,8 @@ func (renderPass *GPURenderPass) DrawGPUIndexedPrimitives(
 
 // Draws data using bound graphics state.
 // (https://wiki.libsdl.org/SDL3/SDL_DrawGPUPrimitives)
-func (renderPass *GPURenderPass) DrawGPUPrimitives(
-	numVertices uint32, numInstances uint32, firstVertex uint32,
-	firstInstance uint32) {
+func (renderPass *GPURenderPass) DrawPrimitives(
+	numVertices uint32, numInstances uint32, firstVertex uint32, firstInstance uint32) {
 
 	C.SDL_DrawGPUPrimitives(
 		(*C.SDL_GPURenderPass)(renderPass),
@@ -1510,9 +1494,7 @@ func (renderPass *GPURenderPass) DrawGPUPrimitives(
 // Draws data using bound graphics state and with draw parameters set from a
 // buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_DrawGPUPrimitivesIndirect)
-func (renderPass *GPURenderPass) DrawGPUPrimitivesIndirect(
-	buffer *GPUBuffer, offset uint32, drawCount uint32) {
-
+func (renderPass *GPURenderPass) DrawPrimitivesIndirect(buffer *GPUBuffer, offset uint32, drawCount uint32) {
 	C.SDL_DrawGPUPrimitivesIndirect(
 		(*C.SDL_GPURenderPass)(renderPass),
 		(*C.SDL_GPUBuffer)(unsafe.Pointer(buffer)), C.Uint32(offset), C.Uint32(drawCount))
@@ -1521,9 +1503,7 @@ func (renderPass *GPURenderPass) DrawGPUPrimitivesIndirect(
 // Draws data using bound graphics state with an index buffer enabled and with
 // draw parameters set from a buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_DrawGPUIndexedPrimitivesIndirect)
-func (renderPass *GPURenderPass) DrawGPUIndexedPrimitivesIndirect(
-	buffer *GPUBuffer, offset uint32, drawCount uint32) {
-
+func (renderPass *GPURenderPass) DrawIndexedPrimitivesIndirect(buffer *GPUBuffer, offset uint32, drawCount uint32) {
 	C.SDL_DrawGPUIndexedPrimitivesIndirect(
 		(*C.SDL_GPURenderPass)(renderPass),
 		(*C.SDL_GPUBuffer)(unsafe.Pointer(buffer)), C.Uint32(offset), C.Uint32(drawCount))
@@ -1541,7 +1521,7 @@ func (renderPass *GPURenderPass) End() {
 // TODO: can storageTextureBindings and or storageBufferBindings be nil?
 // Begins a compute pass on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_BeginGPUComputePass)
-func (commandBuffer *GPUCommandBuffer) BeginGPUComputePass(
+func (commandBuffer *GPUCommandBuffer) BeginComputePass(
 	storageTextureBindings []GPUStorageTextureReadWriteBinding,
 	storageBufferBindings []GPUStorageBufferReadWriteBinding) *GPUComputePass {
 
@@ -1556,9 +1536,7 @@ func (commandBuffer *GPUCommandBuffer) BeginGPUComputePass(
 
 // Binds a compute pipeline on a command buffer for use in compute dispatch.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUComputePipeline)
-func (computePass *GPUComputePass) BindGPUComputePipeline(
-	computePipeline *GPUComputePipeline) {
-
+func (computePass *GPUComputePass) BindComputePipeline(computePipeline *GPUComputePipeline) {
 	C.SDL_BindGPUComputePipeline(
 		(*C.SDL_GPUComputePass)(computePass),
 		(*C.SDL_GPUComputePipeline)(computePipeline))
@@ -1566,9 +1544,7 @@ func (computePass *GPUComputePass) BindGPUComputePipeline(
 
 // Binds texture-sampler pairs for use on the compute shader.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUComputeSamplers)
-func (computePass *GPUComputePass) BindGPUComputeSamplers(
-	firstSlot uint32, bindings []GPUTextureSamplerBinding) {
-
+func (computePass *GPUComputePass) BindComputeSamplers(firstSlot uint32, bindings []GPUTextureSamplerBinding) {
 	data := (*C.SDL_GPUTextureSamplerBinding)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUComputeSamplers(
@@ -1578,9 +1554,7 @@ func (computePass *GPUComputePass) BindGPUComputeSamplers(
 
 // Binds storage textures as readonly for use on the compute pipeline.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUComputeStorageTextures)
-func (computePass *GPUComputePass) BindGPUComputeStorageTextures(
-	firstSlot uint32, bindings []GPUTexture) {
-
+func (computePass *GPUComputePass) BindComputeStorageTextures(firstSlot uint32, bindings []GPUTexture) {
 	data := (*C.SDL_GPUTexture)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUComputeStorageTextures(
@@ -1590,9 +1564,7 @@ func (computePass *GPUComputePass) BindGPUComputeStorageTextures(
 
 // Binds storage buffers as readonly for use on the compute pipeline.
 // (https://wiki.libsdl.org/SDL3/SDL_BindGPUComputeStorageBuffers)
-func (computePass *GPUComputePass) BindGPUComputeStorageBuffers(
-	firstSlot uint32, bindings []GPUBuffer) {
-
+func (computePass *GPUComputePass) BindComputeStorageBuffers(firstSlot uint32, bindings []GPUBuffer) {
 	data := (*C.SDL_GPUBuffer)(unsafe.Pointer(unsafe.SliceData(bindings)))
 	dataLen := C.Uint32(len(bindings))
 	C.SDL_BindGPUComputeStorageBuffers(
@@ -1602,9 +1574,7 @@ func (computePass *GPUComputePass) BindGPUComputeStorageBuffers(
 
 // Dispatches compute work.
 // (https://wiki.libsdl.org/SDL3/SDL_DispatchGPUCompute)
-func (computePass *GPUComputePass) DispatchGPUCompute(
-	groupCountX uint32, groupCountY uint32, groupCountZ uint32) {
-
+func (computePass *GPUComputePass) Dispatch(groupCountX uint32, groupCountY uint32, groupCountZ uint32) {
 	C.SDL_DispatchGPUCompute(
 		(*C.SDL_GPUComputePass)(computePass),
 		C.Uint32(groupCountX), C.Uint32(groupCountY), C.Uint32(groupCountZ))
@@ -1612,9 +1582,7 @@ func (computePass *GPUComputePass) DispatchGPUCompute(
 
 // Dispatches compute work with parameters set from a buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_DispatchGPUComputeIndirect)
-func (computePass *GPUComputePass) DispatchGPUComputeIndirect(
-	buffer *GPUBuffer, offset uint32) {
-
+func (computePass *GPUComputePass) DispatchIndirect(buffer *GPUBuffer, offset uint32) {
 	C.SDL_DispatchGPUComputeIndirect(
 		(*C.SDL_GPUComputePass)(computePass),
 		(*C.SDL_GPUBuffer)(unsafe.Pointer(buffer)), C.Uint32(offset))
@@ -1631,9 +1599,7 @@ func (computePass *GPUComputePass) End() {
 
 // Maps a transfer buffer into application address space.
 // (https://wiki.libsdl.org/SDL3/SDL_MapGPUTransferBuffer)
-func (device *GPUDevice) MapGPUTransferBuffer(
-	transferBuffer *GPUTransferBuffer, cycle bool) (unsafe.Pointer, error) {
-
+func (device *GPUDevice) MapTransferBuffer(transferBuffer *GPUTransferBuffer, cycle bool) (unsafe.Pointer, error) {
 	ret := C.SDL_MapGPUTransferBuffer(
 		(*C.SDL_GPUDevice)(device),
 		(*C.SDL_GPUTransferBuffer)(transferBuffer),
@@ -1646,9 +1612,7 @@ func (device *GPUDevice) MapGPUTransferBuffer(
 
 // Unmaps a previously mapped transfer buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_UnmapGPUTransferBuffer)
-func (device *GPUDevice) UnmapGPUTransferBuffer(
-	transferBuffer *GPUTransferBuffer) {
-
+func (device *GPUDevice) UnmapTransferBuffer(transferBuffer *GPUTransferBuffer) {
 	C.SDL_UnmapGPUTransferBuffer(
 		(*C.SDL_GPUDevice)(device),
 		(*C.SDL_GPUTransferBuffer)(transferBuffer))
@@ -1658,14 +1622,14 @@ func (device *GPUDevice) UnmapGPUTransferBuffer(
 
 // Begins a copy pass on a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_BeginGPUCopyPass)
-func (commandBuffer *GPUCommandBuffer) BeginGPUCopyPass() *GPUCopyPass {
+func (commandBuffer *GPUCommandBuffer) BeginCopyPass() *GPUCopyPass {
 	return (*GPUCopyPass)(C.SDL_BeginGPUCopyPass(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer)))
 }
 
 // Uploads data from a transfer buffer to a texture.
 // (https://wiki.libsdl.org/SDL3/SDL_UploadToGPUTexture)
-func (copyPass *GPUCopyPass) UploadToGPUTexture(
+func (copyPass *GPUCopyPass) UploadToTexture(
 	source *GPUTextureTransferInfo, destination *GPUTextureRegion, cycle bool) {
 
 	C.SDL_UploadToGPUTexture(
@@ -1679,7 +1643,7 @@ func (copyPass *GPUCopyPass) UploadToGPUTexture(
 
 // Uploads data from a transfer buffer to a buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_UploadToGPUBuffer)
-func (copyPass *GPUCopyPass) UploadToGPUBuffer(
+func (copyPass *GPUCopyPass) UploadToBuffer(
 	source *GPUTransferBufferLocation, destination *GPUBufferRegion, cycle bool) {
 
 	C.SDL_UploadToGPUBuffer(
@@ -1691,7 +1655,7 @@ func (copyPass *GPUCopyPass) UploadToGPUBuffer(
 
 // Performs a texture-to-texture copy.
 // (https://wiki.libsdl.org/SDL3/SDL_CopyGPUTextureToTexture)
-func (copyPass *GPUCopyPass) CopyGPUTextureToTexture(
+func (copyPass *GPUCopyPass) CopyTextureToTexture(
 	source *GPUTextureLocation, destination *GPUTextureLocation,
 	width uint32, height uint32, depth uint32, cycle bool) {
 
@@ -1706,9 +1670,8 @@ func (copyPass *GPUCopyPass) CopyGPUTextureToTexture(
 
 // Performs a buffer-to-buffer copy.
 // (https://wiki.libsdl.org/SDL3/SDL_CopyGPUBufferToBuffer)
-func (copyPass *GPUCopyPass) CopyGPUBufferToBuffer(
-	source *GPUBufferLocation, destination *GPUBufferLocation,
-	size uint32, cycle bool) {
+func (copyPass *GPUCopyPass) CopyBufferToBuffer(
+	source *GPUBufferLocation, destination *GPUBufferLocation, size uint32, cycle bool) {
 
 	C.SDL_CopyGPUBufferToBuffer(
 		(*C.SDL_GPUCopyPass)(copyPass),
@@ -1719,9 +1682,7 @@ func (copyPass *GPUCopyPass) CopyGPUBufferToBuffer(
 
 // Copies data from a texture to a transfer buffer on the GPU timeline.
 // (https://wiki.libsdl.org/SDL3/SDL_DownloadFromGPUTexture)
-func (copyPass *GPUCopyPass) DownloadFromGPUTexture(
-	source *GPUTextureRegion, destination *GPUTextureTransferInfo) {
-
+func (copyPass *GPUCopyPass) DownloadFromTexture(source *GPUTextureRegion, destination *GPUTextureTransferInfo) {
 	C.SDL_DownloadFromGPUTexture(
 		(*C.SDL_GPUCopyPass)(copyPass),
 		(*C.SDL_GPUTextureRegion)(unsafe.Pointer(source)),
@@ -1730,9 +1691,7 @@ func (copyPass *GPUCopyPass) DownloadFromGPUTexture(
 
 // Copies data from a buffer to a transfer buffer on the GPU timeline.
 // (https://wiki.libsdl.org/SDL3/SDL_DownloadFromGPUBuffer)
-func (copyPass *GPUCopyPass) DownloadFromGPUBuffer(
-	source *GPUBufferRegion, destination *GPUTransferBufferLocation) {
-
+func (copyPass *GPUCopyPass) DownloadFromBuffer(source *GPUBufferRegion, destination *GPUTransferBufferLocation) {
 	C.SDL_DownloadFromGPUBuffer(
 		(*C.SDL_GPUCopyPass)(copyPass),
 		(*C.SDL_GPUBufferRegion)(unsafe.Pointer(source)),
@@ -1742,15 +1701,12 @@ func (copyPass *GPUCopyPass) DownloadFromGPUBuffer(
 // Ends the current copy pass.
 // (https://wiki.libsdl.org/SDL3/SDL_EndGPUCopyPass)
 func (copyPass *GPUCopyPass) End() {
-	C.SDL_EndGPUCopyPass(
-		(*C.SDL_GPUCopyPass)(copyPass))
+	C.SDL_EndGPUCopyPass((*C.SDL_GPUCopyPass)(copyPass))
 }
 
 // Generates mipmaps for the given texture.
 // (https://wiki.libsdl.org/SDL3/SDL_GenerateMipmapsForGPUTexture)
-func (commandBuffer *GPUCommandBuffer) GenerateMipmapsForGPUTexture(
-	texture *GPUTexture) {
-
+func (commandBuffer *GPUCommandBuffer) GenerateMipmapsForTexture(texture *GPUTexture) {
 	C.SDL_GenerateMipmapsForGPUTexture(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		(*C.SDL_GPUTexture)(texture))
@@ -1758,9 +1714,7 @@ func (commandBuffer *GPUCommandBuffer) GenerateMipmapsForGPUTexture(
 
 // Blits from a source texture region to a destination texture region.
 // (https://wiki.libsdl.org/SDL3/SDL_BlitGPUTexture)
-func (commandBuffer *GPUCommandBuffer) BlitGPUTexture(
-	info *GPUBlitInfo) {
-
+func (commandBuffer *GPUCommandBuffer) BlitTexture(info *GPUBlitInfo) {
 	C.SDL_BlitGPUTexture(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		(*C.SDL_GPUBlitInfo)(unsafe.Pointer(info)))
@@ -1770,7 +1724,7 @@ func (commandBuffer *GPUCommandBuffer) BlitGPUTexture(
 
 // Determines whether a swapchain composition is supported by the window.
 // (https://wiki.libsdl.org/SDL3/SDL_WindowSupportsGPUSwapchainComposition)
-func (device *GPUDevice) WindowSupportsGPUSwapchainComposition(
+func (device *GPUDevice) WindowSupportsSwapchainComposition(
 	window *Window, swapchainComposition GPUSwapchainComposition) bool {
 
 	return bool(C.SDL_WindowSupportsGPUSwapchainComposition(
@@ -1781,9 +1735,7 @@ func (device *GPUDevice) WindowSupportsGPUSwapchainComposition(
 
 // Determines whether a presentation mode is supported by the window.
 // (https://wiki.libsdl.org/SDL3/SDL_WindowSupportsGPUPresentMode)
-func (device *GPUDevice) WindowSupportsGPUPresentMode(
-	window *Window, presentMode GPUPresentMode) bool {
-
+func (device *GPUDevice) WindowSupportsPresentMode(window *Window, presentMode GPUPresentMode) bool {
 	return bool(C.SDL_WindowSupportsGPUPresentMode(
 		(*C.SDL_GPUDevice)(device),
 		(*C.SDL_Window)(window),
@@ -1792,32 +1744,24 @@ func (device *GPUDevice) WindowSupportsGPUPresentMode(
 
 // Claims a window, creating a swapchain structure for it.
 // (https://wiki.libsdl.org/SDL3/SDL_ClaimWindowForGPUDevice)
-func (device *GPUDevice) ClaimWindowForGPUDevice(
-	window *Window) (bool, error) {
-
-	ret := C.SDL_ClaimWindowForGPUDevice(
-		(*C.SDL_GPUDevice)(device),
-		(*C.SDL_Window)(window))
+func (device *GPUDevice) ClaimWindow(window *Window) error {
+	ret := C.SDL_ClaimWindowForGPUDevice((*C.SDL_GPUDevice)(device), (*C.SDL_Window)(window))
 	if !ret {
-		return false, GetError()
+		return GetError()
 	}
-	return true, nil
+	return nil
 }
 
 // Unclaims a window, destroying its swapchain structure.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseWindowFromGPUDevice)
-func (device *GPUDevice) ReleaseWindowFromGPUDevice(
-	window *Window) {
-	C.SDL_ReleaseWindowFromGPUDevice(
-		(*C.SDL_GPUDevice)(device),
-		(*C.SDL_Window)(window))
+func (device *GPUDevice) ReleaseWindow(window *Window) {
+	C.SDL_ReleaseWindowFromGPUDevice((*C.SDL_GPUDevice)(device), (*C.SDL_Window)(window))
 }
 
 // Changes the swapchain parameters for the given claimed window.
 // (https://wiki.libsdl.org/SDL3/SDL_SetGPUSwapchainParameters)
-func (device *GPUDevice) SetGPUSwapchainParameters(
-	window *Window, swapchainComposition GPUSwapchainComposition,
-	presentMode GPUPresentMode) (bool, error) {
+func (device *GPUDevice) SetSwapchainParameters(
+	window *Window, swapchainComposition GPUSwapchainComposition, presentMode GPUPresentMode) (bool, error) {
 
 	ret := C.SDL_SetGPUSwapchainParameters(
 		(*C.SDL_GPUDevice)(device),
@@ -1833,54 +1777,44 @@ func (device *GPUDevice) SetGPUSwapchainParameters(
 
 // Obtains the texture format of the swapchain for the given window.
 // (https://wiki.libsdl.org/SDL3/SDL_GetGPUSwapchainTextureFormat)
-func (device *GPUDevice) GetGPUSwapchainTextureFormat(
-	window *Window) GPUTextureFormat {
-
-	return GPUTextureFormat(C.SDL_GetGPUSwapchainTextureFormat(
-		(*C.SDL_GPUDevice)(device),
-		(*C.SDL_Window)(window)))
+func (device *GPUDevice) GetSwapchainTextureFormat(window *Window) GPUTextureFormat {
+	return GPUTextureFormat(C.SDL_GetGPUSwapchainTextureFormat((*C.SDL_GPUDevice)(device), (*C.SDL_Window)(window)))
 }
 
 // Acquire a texture to use in presentation.
 // (https://wiki.libsdl.org/SDL3/SDL_AcquireGPUSwapchainTexture)
-func (device *GPUDevice) AcquireGPUSwapchainTexture(
-	commandBuffer *GPUCommandBuffer, window *Window,
-	swapchainTexture **GPUTexture, swapchainTextureWidth *uint32,
-	swapchainTextureHeight *uint32) (bool, error) {
+func (commandBuffer *GPUCommandBuffer) AcquireSwapchainTexture(window *Window) (*GPUTexture, uint32, uint32, error) {
+	var texture *GPUTexture
+	var swapchainTextureWidth uint32
+	var swapchainTextureHeight uint32
 
 	ret := C.SDL_AcquireGPUSwapchainTexture(
 		(*C.SDL_GPUCommandBuffer)(commandBuffer),
 		(*C.SDL_Window)(window),
-		(**C.SDL_GPUTexture)(unsafe.Pointer(swapchainTexture)),
-		(*C.Uint32)(unsafe.Pointer(swapchainTextureWidth)),
-		(*C.Uint32)(unsafe.Pointer(swapchainTextureHeight)))
+		(**C.SDL_GPUTexture)(unsafe.Pointer(texture)),
+		(*C.Uint32)(unsafe.Pointer(&swapchainTextureWidth)),
+		(*C.Uint32)(unsafe.Pointer(&swapchainTextureHeight)))
 	if !ret {
-		return false, GetError()
+		return nil, 0, 0, GetError()
 	}
-	return true, nil
+	return texture, swapchainTextureWidth, swapchainTextureHeight, nil
 }
 
 // Submits a command buffer so its commands can be processed on the GPU.
 // (https://wiki.libsdl.org/SDL3/SDL_SubmitGPUCommandBuffer)
-func (device *GPUDevice) SubmitGPUCommandBuffer(
-	commandBuffer *GPUCommandBuffer) (bool, error) {
-
-	ret := C.SDL_SubmitGPUCommandBuffer(
-		(*C.SDL_GPUCommandBuffer)(commandBuffer))
+func (commandBuffer *GPUCommandBuffer) Submit() error {
+	ret := C.SDL_SubmitGPUCommandBuffer((*C.SDL_GPUCommandBuffer)(commandBuffer))
 	if !ret {
-		return false, GetError()
+		return GetError()
 	}
-	return true, nil
+	return nil
 }
 
 // Submits a command buffer so its commands can be processed on the GPU, and
 // acquires a fence associated with the command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_SubmitGPUCommandBufferAndAcquireFence)
-func (device *GPUDevice) SubmitGPUCommandBufferAndAcquireFence(
-	commandBuffer *GPUCommandBuffer) (*GPUFence, error) {
-
-	ret := C.SDL_SubmitGPUCommandBufferAndAcquireFence(
-		(*C.SDL_GPUCommandBuffer)(commandBuffer))
+func (commandBuffer *GPUCommandBuffer) SubmitAndAcquireFence() (*GPUFence, error) {
+	ret := C.SDL_SubmitGPUCommandBufferAndAcquireFence((*C.SDL_GPUCommandBuffer)(commandBuffer))
 	if ret == nil {
 		return nil, GetError()
 	}
@@ -1889,30 +1823,28 @@ func (device *GPUDevice) SubmitGPUCommandBufferAndAcquireFence(
 
 // Cancels a command buffer.
 // (https://wiki.libsdl.org/SDL3/SDL_CancelGPUCommandBuffer)
-func (device *GPUDevice) CancelGPUCommandBuffer(
-	commandBuffer *GPUCommandBuffer) (bool, error) {
-
+func (commandBuffer *GPUCommandBuffer) Cancel() error {
 	ret := C.SDL_CancelGPUCommandBuffer((*C.SDL_GPUCommandBuffer)(commandBuffer))
 	if !ret {
-		return false, GetError()
+		return GetError()
 	}
-	return true, nil
+	return nil
 }
 
 // Blocks the thread until the GPU is completely idle.
 // (https://wiki.libsdl.org/SDL3/SDL_WaitForGPUIdle)
-func (device *GPUDevice) WaitForGPUIdle() (bool, error) {
+func (device *GPUDevice) WaitForIdle() error {
 	ret := C.SDL_WaitForGPUIdle((*C.SDL_GPUDevice)(device))
 	if !ret {
-		return false, GetError()
+		return GetError()
 	}
-	return true, nil
+	return nil
 }
 
 // TODO: is this right? pointer pointer?
 // Blocks the thread until the given fences are signaled.
 // (https://wiki.libsdl.org/SDL3/SDL_WaitForGPUFences)
-func (device *GPUDevice) WaitForGPUFences(waitAll bool, fences []*GPUFence) (bool, error) {
+func (device *GPUDevice) WaitForFences(waitAll bool, fences []*GPUFence) error {
 	data := (*C.SDL_GPUFence)(unsafe.Pointer(&fences))
 	dataLen := C.Uint32(len(fences))
 	ret := C.SDL_WaitForGPUFences(
@@ -1921,14 +1853,14 @@ func (device *GPUDevice) WaitForGPUFences(waitAll bool, fences []*GPUFence) (boo
 		&data,
 		dataLen)
 	if !ret {
-		return false, GetError()
+		return GetError()
 	}
-	return true, nil
+	return nil
 }
 
 // Checks the status of a fence.
 // (https://wiki.libsdl.org/SDL3/SDL_QueryGPUFence)
-func (device *GPUDevice) QueryGPUFence(fence *GPUFence) bool {
+func (device *GPUDevice) QueryFence(fence *GPUFence) bool {
 	return bool(C.SDL_QueryGPUFence(
 		(*C.SDL_GPUDevice)(device),
 		(*C.SDL_GPUFence)(fence)))
@@ -1936,7 +1868,7 @@ func (device *GPUDevice) QueryGPUFence(fence *GPUFence) bool {
 
 // Releases a fence obtained from SDL_SubmitGPUCommandBufferAndAcquireFence.
 // (https://wiki.libsdl.org/SDL3/SDL_ReleaseGPUFence)
-func (device *GPUDevice) ReleaseGPUFence(fence *GPUFence) {
+func (device *GPUDevice) ReleaseFence(fence *GPUFence) {
 	C.SDL_ReleaseGPUFence(
 		(*C.SDL_GPUDevice)(device),
 		(*C.SDL_GPUFence)(fence))
@@ -1954,8 +1886,7 @@ func (format GPUTextureFormat) TexelBlockSize() uint32 {
 // usage.
 // (https://wiki.libsdl.org/SDL3/SDL_GPUTextureSupportsFormat)
 func (device *GPUDevice) TextureSupportsFormat(
-	format GPUTextureFormat, textureType GPUTextureType,
-	usage GPUTextureUsageFlags) bool {
+	format GPUTextureFormat, textureType GPUTextureType, usage GPUTextureUsageFlags) bool {
 
 	return bool(C.SDL_GPUTextureSupportsFormat(
 		(*C.SDL_GPUDevice)(device),
@@ -1966,9 +1897,7 @@ func (device *GPUDevice) TextureSupportsFormat(
 
 // Determines if a sample count for a texture format is supported.
 // (https://wiki.libsdl.org/SDL3/SDL_GPUTextureSupportsSampleCount)
-func (device *GPUDevice) TextureSupportsSampleCount(
-	format GPUTextureFormat, sampleCount GPUSampleCount) bool {
-
+func (device *GPUDevice) TextureSupportsSampleCount(format GPUTextureFormat, sampleCount GPUSampleCount) bool {
 	return bool(C.SDL_GPUTextureSupportsSampleCount(
 		(*C.SDL_GPUDevice)(device),
 		C.SDL_GPUTextureFormat(format),
@@ -1977,10 +1906,7 @@ func (device *GPUDevice) TextureSupportsSampleCount(
 
 // Calculate the size in bytes of a texture format with dimensions.
 // (https://wiki.libsdl.org/SDL3/SDL_CalculateGPUTextureFormatSize)
-func (format GPUTextureFormat) CalculateSize(
-	width uint32, height uint32,
-	depthOrLayerCount uint32) uint32 {
-
+func (format GPUTextureFormat) CalculateSize(width uint32, height uint32, depthOrLayerCount uint32) uint32 {
 	return uint32(C.SDL_CalculateGPUTextureFormatSize(
 		C.SDL_GPUTextureFormat(format),
 		C.Uint32(width),
