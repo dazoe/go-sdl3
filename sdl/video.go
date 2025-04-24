@@ -3,6 +3,7 @@ package sdl
 /*
 #include <SDL3/SDL_video.h>
 #include "video.h"
+#include "stdlib.h"
 */
 import "C"
 import (
@@ -501,7 +502,9 @@ func GetWindows() ([]*Window, error) {
 // Create a window with the specified dimensions and flags.
 // (https://wiki.libsdl.org/SDL3/SDL_CreateWindow)
 func CreateWindow(title string, w, h int, flags WindowFlags) (window *Window, err error) {
-	window = (*Window)(unsafe.Pointer(C.SDL_CreateWindow(C.CString(title), C.int(w), C.int(h), flags.c())))
+	cTitle := C.CString(title)
+	defer C.free(unsafe.Pointer(cTitle))
+	window = (*Window)(unsafe.Pointer(C.SDL_CreateWindow(cTitle, C.int(w), C.int(h), flags.c())))
 	if window == nil {
 		err = GetError()
 	}
@@ -647,7 +650,9 @@ func (window *Window) GetFlags() WindowFlags {
 // Set the title of a window.
 // (https://wiki.libsdl.org/SDL3/SDL_SetWindowTitle)
 func (window *Window) SetTitle(title string) (err error) {
-	ret := C.SDL_SetWindowTitle(window.cptr(), C.CString(title))
+	cTitle := C.CString(title)
+	defer C.free(unsafe.Pointer(cTitle))
+	ret := C.SDL_SetWindowTitle(window.cptr(), cTitle)
 	if !ret {
 		err = GetError()
 	}
@@ -1187,6 +1192,7 @@ func GL_LoadLibrary(path string) (err error) {
 	var cPath *C.char
 	if len(path) > 0 {
 		cPath = C.CString(path)
+		defer C.free(unsafe.Pointer(cPath))
 	}
 	ret := C.SDL_GL_LoadLibrary(cPath)
 	if !ret {
@@ -1198,13 +1204,17 @@ func GL_LoadLibrary(path string) (err error) {
 // Get an OpenGL function by name.
 // (https://wiki.libsdl.org/SDL3/SDL_GL_GetProcAddress)
 func GL_GetProcAddress(proc string) FunctionPointer {
-	return FunctionPointer(C.SDL_GL_GetProcAddress(C.CString(proc)))
+	cProc := C.CString(proc)
+	defer C.free(unsafe.Pointer(cProc))
+	return FunctionPointer(C.SDL_GL_GetProcAddress(cProc))
 }
 
 // Get an EGL library function by name.
 // (https://wiki.libsdl.org/SDL3/SDL_EGL_GetProcAddress)
 func EGL_GetProcAddress(proc string) FunctionPointer {
-	return FunctionPointer(C.SDL_EGL_GetProcAddress(C.CString(proc)))
+	cProc := C.CString(proc)
+	defer C.free(unsafe.Pointer(cProc))
+	return FunctionPointer(C.SDL_EGL_GetProcAddress(cProc))
 }
 
 // Unload the OpenGL library previously loaded by SDL_GL_LoadLibrary().
@@ -1216,7 +1226,9 @@ func GL_UnloadLibrary() {
 // Check if an OpenGL extension is supported for the current context.
 // (https://wiki.libsdl.org/SDL3/SDL_GL_ExtensionSupported)
 func GL_ExtensionSupported(extension string) bool {
-	return bool(C.SDL_GL_ExtensionSupported(C.CString(extension)))
+	cExtension := C.CString(extension)
+	defer C.free(unsafe.Pointer(cExtension))
+	return bool(C.SDL_GL_ExtensionSupported(cExtension))
 }
 
 // Reset all previously set OpenGL context attributes to their default values.
